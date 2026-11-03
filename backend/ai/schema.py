@@ -1,0 +1,120 @@
+"""
+Structured output the AI must return for ONE enquiry.
+
+Rule of thumb for this file:
+- The AI only fills what it can judge from a single message.
+- Anything that needs other records or arithmetic (duplicates, missing phone,
+  48h overdue, phone normalisation) is done in plain code, not here.
+"""
+from enum import Enum
+from pydantic import BaseModel, Field
+
+
+class MessageType(str, Enum):
+    lead = "lead"                # wants to buy / learn about a program
+    support = "support"          # existing customer with a problem (payment, access)
+    complaint = "complaint"      # unhappy customer, refund/cancel, escalation risk
+    spam = "spam"                # ads, scams, links
+    irrelevant = "irrelevant"    # real person, but not a customer (e.g. job seeker)
+
+
+class Interest(str, Enum):
+    bootcamp = "bootcamp"
+    fellowship = "fellowship"
+    corporate = "corporate"            # training for a company / team
+    other = "other"                    # names something else (e.g. free masterclass)
+    unclear = "unclear"                # a prospect, but the program is not stated
+    not_applicable = "not_applicable"  # spam / irrelevant
+
+
+class Language(str, Enum):
+    bangla = "bangla"        # Bangla script
+    banglish = "banglish"    # Bangla written in Latin letters
+    english = "english"
+
+
+class Status(str, Enum):
+    new = "New"
+    contacted = "Contacted"
+    interested = "Interested"
+    paid = "Paid"
+    lost = "Lost"
+
+
+class Priority(str, Enum):
+    urgent = "urgent"   # act today: angry customer, refund, public complaint threat
+    high = "high"       # corporate deal, money stuck, clear buying signal
+    medium = "medium"   # normal sales question
+    low = "low"         # vague, very early, or unlikely to convert
+
+
+class AIFlag(str, Enum):
+    payment_unverified = "payment_unverified"        # says they paid, we have no proof yet
+    refund_request = "refund_request"                # wants cancel / money back
+    public_complaint_risk = "public_complaint_risk"  # threatens to post publicly
+    minor = "minor"                                  # sender appears to be under 18
+    callback_requested = "callback_requested"        # asked us to call, or said they will call
+    group_or_bulk = "group_or_bulk"                  # several people / employees
+
+
+class ExtractedEnquiry(BaseModel):
+    message_type: MessageType
+    message_type_reason: str = Field(description="One short English sentence.")
+
+    name: str | None = Field(None, description="Person's name only, no role or company.")
+    role: str | None = Field(None, description="Job title if stated, e.g. 'HR', 'Owner'.")
+    company: str | None = Field(None, description="Company name or description if stated.")
+    team_size: int | None = Field(None, description="Number of people to train, if stated.")
+    phone_in_message: str | None = Field(
+        None, description="Phone number written inside the message text, copied as-is. Null if none."
+    )
+
+    interest: Interest
+    interest_detail: str | None = Field(
+        None, description="What exactly they asked, in English, max ~12 words."
+    )
+    language: Language
+
+    status: Status | None = Field(
+        None, description="Pipeline status. Null only for spam and irrelevant."
+    )
+    priority: Priority
+    priority_reason: str = Field(description="One short English sentence.")
+
+    follow_up_by: str | None = Field(
+        None,
+        description=(
+            "Local Dhaka time 'YYYY-MM-DDTHH:MM' ONLY if the message states or implies a time "
+            "(e.g. 'tomorrow after 5 PM', 'this week', 'today'). Null otherwise; code applies "
+            "the default 48h rule."
+        ),
+    )
+    flags: list[AIFlag] = Field(default_factory=list)
+
+    summary: str = Field(description="One English sentence a staff member can scan.")
+    missing_info: list[str] = Field(
+        default_factory=list,
+        description="Info we need before we can help, e.g. 'which program', 'phone number'.",
+    )
+    low_confidence_fields: list[str] = Field(
+        default_factory=list,
+        description="Names of fields above that are a guess and should be checked by a human.",
+    )
+
+
+# ---- Gold-file models (used by eval/run_eval.py) ----
+
+class SystemExpected(BaseModel):
+    """What plain code (not the AI) should produce for this message."""
+    normalized_phone: str | None = None
+    missing_phone: bool = False
+    duplicate_of: int | None = None
+    # Priority of the merged record after code-side rules (e.g. repeat ask, no reply -> urgent).
+    priority_after_merge: Priority | None = None
+
+
+class GoldItem(BaseModel):
+    id: int
+    expected: ExtractedEnquiry
+    system_expected: SystemExpected
+    notes: str = ""

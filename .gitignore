@@ -218,3 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# BIAI hiring brief: kept local, restated in PRD.md §0
+BRIEF.md

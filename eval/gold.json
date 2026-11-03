@@ -1,0 +1,466 @@
+{
+  "conventions": {
+    "timezone": "All times are Asia/Dhaka local, 'YYYY-MM-DDTHH:MM'. 26 Oct 2026 is a Monday.",
+    "workweek": "Bangladesh workweek is Sunday-Thursday, so 'this week' from Monday 26 Oct means by Thursday 29 Oct.",
+    "phone_call_notes": "Call notes are written by staff in English, so language is 'english', but the reply should be a call script, not a text message.",
+    "scoring": "Strict match: message_type, interest, language, status. Priority counts as correct if within one level. follow_up_by: date must match. Flags: scored as recall of the expected flags. name: case-insensitive match. Free-text fields (reasons, summary, detail) are not scored.",
+    "do_not_leak": "Never paste these 20 items into the prompt as examples. The prompt uses invented examples only, otherwise the eval score means nothing."
+  },
+  "items": [
+    {
+      "id": 1,
+      "expected": {
+        "message_type": "lead",
+        "message_type_reason": "Asks bootcamp price and how to pay.",
+        "name": "Rafi Ahmed",
+        "interest": "bootcamp",
+        "interest_detail": "3-day bootcamp price and payment method",
+        "language": "banglish",
+        "status": "New",
+        "priority": "high",
+        "priority_reason": "Asks price and how to pay: close to buying.",
+        "summary": "Wants the 3-day bootcamp price and how to pay."
+      },
+      "system_expected": {
+        "normalized_phone": "01711000001"
+      },
+      "notes": "Same person as #12. Price + payment method = buying signal, so high."
+    },
+    {
+      "id": 2,
+      "expected": {
+        "message_type": "lead",
+        "message_type_reason": "Wants to join the fellowship.",
+        "name": "Tahmina Akter",
+        "interest": "fellowship",
+        "interest_detail": "Wants to enrol; asks start date",
+        "language": "bangla",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Wants to enrol but only asks the start date.",
+        "summary": "Wants to join the fellowship and asks when it starts.",
+        "missing_info": [
+          "phone number"
+        ]
+      },
+      "system_expected": {
+        "missing_phone": true
+      },
+      "notes": "Reply in Bangla script."
+    },
+    {
+      "id": 3,
+      "expected": {
+        "message_type": "lead",
+        "message_type_reason": "Company wants AI training for staff.",
+        "name": "Mahmud Hasan",
+        "role": "Managing Director",
+        "company": "Gazipur textile company",
+        "team_size": 40,
+        "interest": "corporate",
+        "interest_detail": "AI training for 40-person team; wants a call",
+        "language": "english",
+        "status": "New",
+        "priority": "high",
+        "priority_reason": "Corporate deal with a decision-maker asking for a call.",
+        "follow_up_by": "2026-10-29T17:00",
+        "flags": [
+          "callback_requested",
+          "group_or_bulk"
+        ],
+        "summary": "MD of a 40-person textile company wants team AI training and a call this week."
+      },
+      "system_expected": {
+        "normalized_phone": "01711000003"
+      },
+      "notes": "Role and company come from the sender name in brackets. 'This week' = by Thursday."
+    },
+    {
+      "id": 4,
+      "expected": {
+        "message_type": "lead",
+        "message_type_reason": "Asks about class format before joining.",
+        "name": "Sabbir",
+        "interest": "unclear",
+        "interest_detail": "Live or recorded classes; recordings available?",
+        "language": "banglish",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Normal pre-purchase question.",
+        "summary": "Asks whether classes are live or recorded and if recordings are given.",
+        "missing_info": [
+          "which program"
+        ]
+      },
+      "system_expected": {
+        "normalized_phone": "01711000004"
+      },
+      "notes": ""
+    },
+    {
+      "id": 5,
+      "expected": {
+        "message_type": "lead",
+        "message_type_reason": "Prospect asking about a student discount.",
+        "name": "Nasreen Sultana",
+        "interest": "unclear",
+        "interest_detail": "Student discount",
+        "language": "english",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Price-sensitive prospect who plans to call back.",
+        "follow_up_by": "2026-10-27T17:00",
+        "flags": [
+          "callback_requested"
+        ],
+        "summary": "Asked about a student discount; will call again tomorrow after 5 PM.",
+        "missing_info": [
+          "which program"
+        ]
+      },
+      "system_expected": {
+        "normalized_phone": "01711000005"
+      },
+      "notes": "'Tomorrow' is relative to received_at (26 Oct), not today's date."
+    },
+    {
+      "id": 6,
+      "expected": {
+        "message_type": "lead",
+        "message_type_reason": "Asks if the course leads to a job.",
+        "name": "Ishtiaq",
+        "interest": "unclear",
+        "interest_detail": "Will this course help get a job?",
+        "language": "banglish",
+        "status": "New",
+        "priority": "low",
+        "priority_reason": "Vague question in a public comment.",
+        "summary": "Public comment asking if the course will get him a job.",
+        "missing_info": [
+          "which program",
+          "phone number"
+        ]
+      },
+      "system_expected": {
+        "missing_phone": true
+      },
+      "notes": "Facebook comment is public: the reply should be short and invite him to inbox, never promise a job."
+    },
+    {
+      "id": 7,
+      "expected": {
+        "message_type": "support",
+        "message_type_reason": "Paid but did not get confirmation.",
+        "name": "Farzana Rahman",
+        "interest": "unclear",
+        "interest_detail": "Payment confirmation; paid via bKash on the 25th",
+        "language": "bangla",
+        "status": "Paid",
+        "priority": "high",
+        "priority_reason": "Customer money is unconfirmed; trust at risk.",
+        "flags": [
+          "payment_unverified"
+        ],
+        "summary": "Says she paid by bKash on 25 Oct but got no confirmation.",
+        "missing_info": [
+          "bKash transaction ID",
+          "which program"
+        ]
+      },
+      "system_expected": {
+        "normalized_phone": "01711000007"
+      },
+      "notes": "Status Paid but flagged unverified. Reply should ask for the bKash transaction ID."
+    },
+    {
+      "id": 8,
+      "expected": {
+        "message_type": "lead",
+        "message_type_reason": "Asks refund policy before paying.",
+        "name": "Anika Chowdhury",
+        "interest": "unclear",
+        "interest_detail": "Refund policy if unable to attend",
+        "language": "english",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Pre-purchase question; answer builds trust.",
+        "summary": "Asks if she can get a refund if she cannot attend after paying.",
+        "missing_info": [
+          "which program"
+        ]
+      },
+      "system_expected": {
+        "normalized_phone": "01711000008"
+      },
+      "notes": "Not a complaint: she has not paid yet. Reply must only quote the refund policy from faq.yaml."
+    },
+    {
+      "id": 9,
+      "expected": {
+        "message_type": "lead",
+        "message_type_reason": "Asks offline class location.",
+        "name": "Jahid",
+        "interest": "unclear",
+        "interest_detail": "Offline class venue; Mirpur?",
+        "language": "banglish",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Normal pre-purchase question.",
+        "summary": "Asks where offline classes are held, maybe Mirpur.",
+        "missing_info": [
+          "which program",
+          "phone number"
+        ]
+      },
+      "system_expected": {
+        "missing_phone": true
+      },
+      "notes": ""
+    },
+    {
+      "id": 10,
+      "expected": {
+        "message_type": "lead",
+        "message_type_reason": "Bank wants a training quote.",
+        "name": "Kamrul Islam",
+        "role": "HR",
+        "company": "a bank in Motijheel",
+        "team_size": 120,
+        "interest": "corporate",
+        "interest_detail": "Quote for 120 employees; online or onsite",
+        "language": "english",
+        "status": "New",
+        "priority": "high",
+        "priority_reason": "Largest deal in the set; asking for a quote.",
+        "flags": [
+          "group_or_bulk"
+        ],
+        "summary": "HR at a Motijheel bank wants a quote to train 120 staff, online or onsite."
+      },
+      "system_expected": {
+        "normalized_phone": "01711000010"
+      },
+      "notes": "Could also be urgent given deal size. Within-one-level scoring accepts both."
+    },
+    {
+      "id": 11,
+      "expected": {
+        "message_type": "spam",
+        "message_type_reason": "Crypto scam with a short link.",
+        "name": null,
+        "interest": "not_applicable",
+        "language": "english",
+        "status": null,
+        "priority": "low",
+        "priority_reason": "Spam.",
+        "summary": "Crypto signals spam with a link."
+      },
+      "system_expected": {
+        "missing_phone": true
+      },
+      "notes": "Sender name 'Earn Crypto Daily' is not a person, so name is null. Should not appear in the pipeline. No reply."
+    },
+    {
+      "id": 12,
+      "expected": {
+        "message_type": "lead",
+        "message_type_reason": "Asks bootcamp price again.",
+        "name": "Rafi Ahmed",
+        "interest": "bootcamp",
+        "interest_detail": "Bootcamp price",
+        "language": "banglish",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Price question.",
+        "summary": "Asks for the bootcamp price."
+      },
+      "system_expected": {
+        "normalized_phone": "01711000001",
+        "duplicate_of": 1,
+        "priority_after_merge": "urgent"
+      },
+      "notes": "AI sees this message alone, so medium is right (price only, no payment question). Code merges it into #1 and raises the merged record to urgent: a hot lead asked twice and got no reply for a day."
+    },
+    {
+      "id": 13,
+      "expected": {
+        "message_type": "lead",
+        "message_type_reason": "Asks to join the free masterclass.",
+        "name": "Mim",
+        "interest": "other",
+        "interest_detail": "Free masterclass; class 9 student",
+        "language": "bangla",
+        "status": "New",
+        "priority": "low",
+        "priority_reason": "Minor asking about a free event.",
+        "flags": [
+          "minor"
+        ],
+        "summary": "Class 9 student asks if she can join the free masterclass.",
+        "missing_info": [
+          "phone number"
+        ]
+      },
+      "system_expected": {
+        "missing_phone": true
+      },
+      "notes": "Minor: reply should be friendly, answer from faq.yaml, and not push paid programs or ask for personal details."
+    },
+    {
+      "id": 14,
+      "expected": {
+        "message_type": "lead",
+        "message_type_reason": "Asks if fellowship suits her background.",
+        "name": "Shirin Sultana",
+        "role": "Marketing Manager",
+        "interest": "fellowship",
+        "interest_detail": "Fit for non-technical marketer, 8 yrs experience",
+        "language": "english",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Interested but still checking fit; not ready to buy.",
+        "summary": "Non-technical marketing manager (8 years) asks if the fellowship suits her."
+      },
+      "system_expected": {
+        "normalized_phone": "01711000013"
+      },
+      "notes": "Phone ends in 13 even though id is 14; the CSV shifts after #12."
+    },
+    {
+      "id": 15,
+      "expected": {
+        "message_type": "lead",
+        "message_type_reason": "Asks what add-on and lifetime access mean.",
+        "name": "Tanvir",
+        "interest": "unclear",
+        "interest_detail": "What is the add-on; meaning of lifetime access",
+        "language": "banglish",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Reading the offer closely; considering purchase.",
+        "summary": "Asks what the add-on is and what lifetime access means.",
+        "missing_info": [
+          "which program"
+        ]
+      },
+      "system_expected": {
+        "normalized_phone": "01711000014"
+      },
+      "notes": ""
+    },
+    {
+      "id": 16,
+      "expected": {
+        "message_type": "complaint",
+        "message_type_reason": "Wants to cancel and get a refund; angry.",
+        "name": "Habibur Rahman",
+        "interest": "unclear",
+        "interest_detail": "Cancel enrolment and refund",
+        "language": "english",
+        "status": "Paid",
+        "priority": "urgent",
+        "priority_reason": "Angry, wants refund today, threatens public post.",
+        "follow_up_by": "2026-10-27T17:00",
+        "flags": [
+          "refund_request",
+          "public_complaint_risk"
+        ],
+        "summary": "Upset customer wants to cancel and get a refund today or will post on Facebook.",
+        "missing_info": [
+          "which program",
+          "reason for cancelling"
+        ]
+      },
+      "system_expected": {
+        "normalized_phone": "01711000015"
+      },
+      "notes": "Status stays Paid (not Lost yet, can still be saved). Most urgent item in the set. Exact hour of follow_up_by not scored, only the date."
+    },
+    {
+      "id": 17,
+      "expected": {
+        "message_type": "lead",
+        "message_type_reason": "Asks if the certificate is government approved.",
+        "name": "Nowshin",
+        "interest": "unclear",
+        "interest_detail": "Is the certificate government approved?",
+        "language": "banglish",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Normal pre-purchase question.",
+        "summary": "Asks whether the course certificate is government approved.",
+        "missing_info": [
+          "which program",
+          "phone number"
+        ]
+      },
+      "system_expected": {
+        "missing_phone": true
+      },
+      "notes": "High hallucination risk: the reply must not claim government approval unless faq.yaml says so."
+    },
+    {
+      "id": 18,
+      "expected": {
+        "message_type": "lead",
+        "message_type_reason": "Factory owner asks group discount for staff.",
+        "name": "Rezaul Karim",
+        "role": "Owner",
+        "company": "small garment factory",
+        "team_size": 15,
+        "interest": "corporate",
+        "interest_detail": "Group discount for 15 employees",
+        "language": "bangla",
+        "status": "New",
+        "priority": "high",
+        "priority_reason": "Business owner, 15 seats, asking about price.",
+        "flags": [
+          "group_or_bulk"
+        ],
+        "summary": "Garment factory owner asks about a group discount for 15 employees."
+      },
+      "system_expected": {
+        "normalized_phone": "01711000017"
+      },
+      "notes": "Team size is written in Bangla numerals (১৫). Corporate even though he says 'discount' not 'training'. Reply in Bangla script."
+    },
+    {
+      "id": 19,
+      "expected": {
+        "message_type": "lead",
+        "message_type_reason": "Asks about paying the fellowship in instalments.",
+        "name": "Samira",
+        "interest": "fellowship",
+        "interest_detail": "Pay in two instalments",
+        "language": "english",
+        "status": "New",
+        "priority": "high",
+        "priority_reason": "Asking how to pay: ready to buy.",
+        "summary": "Asks if the fellowship can be paid in two instalments."
+      },
+      "system_expected": {
+        "normalized_phone": "01711000018"
+      },
+      "notes": "Some may label this Interested rather than New. Keep New: status changes are a staff action."
+    },
+    {
+      "id": 20,
+      "expected": {
+        "message_type": "irrelevant",
+        "message_type_reason": "Job seeker, not a customer.",
+        "name": "Arif Hossain",
+        "interest": "not_applicable",
+        "interest_detail": "Wants to apply for AI intern job",
+        "language": "english",
+        "status": null,
+        "priority": "low",
+        "priority_reason": "Not a sales enquiry.",
+        "summary": "Looking for an AI intern job and asks where to apply."
+      },
+      "system_expected": {
+        "normalized_phone": "01711000019"
+      },
+      "notes": "Not in the pipeline. Reply points to the careers page / HR. (A nice wink in the video, given your own application.)"
+    }
+  ]
+}
