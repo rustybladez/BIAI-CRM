@@ -356,7 +356,7 @@ Work in order. At the end of each milestone: tick the boxes, run the checks list
 - **Done when:** `uv run fastapi dev backend/main.py` serves `/api/meta`, and `npm run dev` shows a page calling it.
 
 ### M1: AI core + extraction eval (3h)
-- [ ] `ai/client.py`: DeepSeek → Gemini fallback, JSON mode, Pydantic validation, one retry, timeout, `model_used` + `latency_ms`
+- [x] `ai/client.py`: DeepSeek → Gemini fallback, JSON mode, Pydantic validation, one retry, timeout, `model_used` + `latency_ms`
 - [ ] `eval/run_eval.py` as in §10.1, writes `ai_results.json` and `eval/report.md`
 - [ ] Iterate on `prompts.py` until targets in §10.1 are met (max 2–3 rounds)
 - [ ] Decide Bangla routing from the numbers

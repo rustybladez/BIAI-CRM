@@ -35,4 +35,4 @@ exclude = ["backend/ai/schema.py", "backend/ai/prompts.py"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["."]
+pythonpath = [".", "eval"]
