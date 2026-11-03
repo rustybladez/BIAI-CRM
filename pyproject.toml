@@ -1,0 +1,38 @@
+[project]
+name = "biai-crm"
+version = "0.1.0"
+description = "Small CRM for BIAI enquiries with AI extraction and replies"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]",
+    "sqlmodel",
+    "openai",
+    "python-dotenv",
+    "pyyaml",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[tool.fastapi]
+entrypoint = "backend.main:app"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+# E501: prompt text has long lines. UP042: keep (str, Enum) as written in schema.py.
+ignore = ["E501", "UP042"]
+
+[tool.ruff.format]
+exclude = ["backend/ai/schema.py", "backend/ai/prompts.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

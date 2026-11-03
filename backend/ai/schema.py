@@ -7,6 +7,7 @@ Rule of thumb for this file:
   48h overdue, phone normalisation) is done in plain code, not here.
 """
 from enum import Enum
+
 from pydantic import BaseModel, Field
 
 

@@ -62,6 +62,12 @@ eval/run_eval.py     scores the AI against gold.json, prints a table
   The demo must work without any live AI call. Only "paste a new message" calls the AI live.
 
 ## Commands
-- Backend: `uv run fastapi dev backend/main.py`
+- Backend: `uv run fastapi dev` (entrypoint `backend.main:app` is set in pyproject.toml)
 - Frontend: `cd frontend && npm run dev` (proxy `/api` to the backend); build with `npm run build` into `backend/static`
 - Eval: `uv run python eval/run_eval.py`
+- Checks: `uv run ruff check backend tests eval && uv run pytest -q`; frontend `npm run lint && npm run build`
+- `backend/static/` (the built frontend) is committed so a fresh clone and FastAPI Cloud can serve it without Node.
+
+## Skills
+- `.claude/skills/fastapi` and `.claude/skills/sqlmodel` are the official skills shipped inside those packages.
+  Follow them (Annotated params, return types, `app.frontend()`, `session.exec(select(...))`, aware datetimes).

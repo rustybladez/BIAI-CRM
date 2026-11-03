@@ -8,18 +8,18 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
+/build/
 develop-eggs/
-dist/
-downloads/
-eggs/
+/dist/
+/downloads/
+/eggs/
 .eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
+/lib/
+/lib64/
+/parts/
+/sdist/
+/var/
+/wheels/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
@@ -29,8 +29,7 @@ MANIFEST
 # PyInstaller
 #   Usually these files are written by a python script from a template
 #   before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+# (*.manifest / *.spec removed: they would hide frontend *.spec.ts test files)
 
 # Installer logs
 pip-log.txt
@@ -221,3 +220,15 @@ __marimo__/
 
 # BIAI hiring brief: kept local, restated in PRD.md §0
 BRIEF.md
+
+# ---- Project additions ----
+# Node / frontend
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+# Local SQLite database
+*.db
+*.sqlite
+*.sqlite3
+# Claude Code local settings
+.claude/settings.local.json

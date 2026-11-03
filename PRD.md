@@ -350,9 +350,9 @@ Plus a manual review: print all 20 replies to `eval/replies.md`; the owner reads
 Work in order. At the end of each milestone: tick the boxes, run the checks listed, commit, and **stop for review**. Time budgets are targets, not limits; if a milestone overruns by 50%, cut scope from §4.3, never from §4.1.
 
 ### M0: Repo setup (0.5h)
-- [ ] uv project, FastAPI, SQLModel, pytest, ruff; Vite + React + TS + Tailwind in `frontend/`
-- [ ] `.env.example` with all env vars; `.env` git-ignored
-- [ ] `backend/seed/` contains `enquiries.csv` and `TASK README.md`
+- [x] uv project, FastAPI, SQLModel, pytest, ruff; Vite + React + TS + Tailwind in `frontend/`
+- [x] `.env.example` with all env vars; `.env` git-ignored
+- [x] `backend/seed/` contains `enquiries.csv` and `TASK README.md`
 - **Done when:** `uv run fastapi dev backend/main.py` serves `/api/meta`, and `npm run dev` shows a page calling it.
 
 ### M1: AI core + extraction eval (3h)
