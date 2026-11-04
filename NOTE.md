@@ -69,3 +69,14 @@
 or "Overdue first" (all overdue cards on top, then priority). In both, ties go to whoever has waited longest.
 The Follow-ups list and the API default use priority first too, matching the weekly summary's chase-first list.
 Cards cannot be reordered by hand on purpose: the order is automatic, so nobody has to keep it tidy.
+
+**UI redesign (2026-11-04):** the first UI opened on a Kanban board that was 3,047 px tall on a laptop, with no
+overview and the "Not a lead" tray at the bottom. Redesigned around a left sidebar and three screens:
+- **Today** (home): status line, five KPI cards that open filtered views, "Needs you now" queue (All waiting /
+  Urgent / Overdue / Due today) with Reply or Call, the AI weekly brief, pipeline bar, channels.
+- **Pipeline**: one toolbar (Pipeline / Not a lead tabs, filter menu with removable chips, sort, Board / Table),
+  compact three-line cards, columns that scroll inside a page that no longer scrolls; empty columns shrink.
+- **Contact panel**: chat-style thread (Messenger-like bubbles, day separators, merge / status / note lines), the
+  reply composer docked under it, properties on the right with click-to-edit, ‹ › to step through the queue.
+- **New enquiry** in two panes, **Reports** page, search (name, phone, company, message text, Bangla included),
+  demo clock and reset moved into a "Demo mode" box. Shortcuts: `/` search, `n` new enquiry, `j`/`k` next/previous.

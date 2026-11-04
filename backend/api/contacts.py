@@ -34,6 +34,9 @@ def list_contacts(
     message_type: Annotated[MessageType | None, Query(alias="type")] = None,
     lane: Annotated[str | None, Query(pattern="^(pipeline|not_a_lead)$")] = None,
     sort: SortMode = "priority",
+    q: Annotated[
+        str | None, Query(max_length=100, description="Search name, phone, company, summary and messages")
+    ] = None,
 ) -> list[ContactSummary]:
     """Contacts sorted by `sort`: `priority` (default: most urgent first, then overdue) or `overdue`
     (overdue first, then priority); ties go to the longest wait. `lane=pipeline` hides spam /
@@ -53,7 +56,21 @@ def list_contacts(
         query = query.where(Contact.status == None)  # noqa: E711
 
     now = demo_now()
-    items = [to_summary(c, now) for c in session.exec(query).all()]
+    contacts = session.exec(query).all()
+    if q and q.strip():
+        needle = q.strip().casefold()
+        digits = normalize_phone(needle) or "".join(ch for ch in needle if ch.isdigit())
+
+        def matches(c: Contact) -> bool:
+            text = " ".join(
+                filter(None, [c.name, c.company, c.role, c.summary, *(e.message for e in c.enquiries)])
+            )
+            return needle in text.casefold() or bool(
+                digits and len(digits) >= 4 and c.phone and digits in c.phone
+            )
+
+        contacts = [c for c in contacts if matches(c)]
+    items = [to_summary(c, now) for c in contacts]
     if channel:
         items = [s for s in items if channel in s.channels]
     if overdue is not None:

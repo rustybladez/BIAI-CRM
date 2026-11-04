@@ -1,7 +1,7 @@
 import type { ContactSummary } from '../api'
 
-export type Filters = { interest: string; channel: string; priority: string; overdueOnly: boolean }
-export const NO_FILTERS: Filters = { interest: '', channel: '', priority: '', overdueOnly: false }
+export type Filters = { interest: string; channel: string; priority: string; overdueOnly: boolean; waitingOnly: boolean }
+export const NO_FILTERS: Filters = { interest: '', channel: '', priority: '', overdueOnly: false, waitingOnly: false }
 
 export function applyFilters(items: ContactSummary[], f: Filters): ContactSummary[] {
   return items.filter(
@@ -9,7 +9,8 @@ export function applyFilters(items: ContactSummary[], f: Filters): ContactSummar
       (!f.interest || c.interest === f.interest) &&
       (!f.channel || c.channels.includes(f.channel)) &&
       (!f.priority || c.priority === f.priority) &&
-      (!f.overdueOnly || c.overdue),
+      (!f.overdueOnly || c.overdue) &&
+      (!f.waitingOnly || (c.awaiting_reply && c.status !== 'Lost')),
   )
 }
 
@@ -53,5 +54,28 @@ export function saveSortMode(mode: SortMode): void {
     localStorage.setItem(SORT_STORAGE_KEY, mode)
   } catch {
     // storage blocked: the choice just lasts for this visit
+  }
+}
+
+export function activeFilterCount(f: Filters): number {
+  return [f.interest, f.channel, f.priority].filter(Boolean).length + Number(f.overdueOnly) + Number(f.waitingOnly)
+}
+
+const VIEW_STORAGE_KEY = 'biai-crm.pipeline-view'
+export type PipelineLayout = 'board' | 'table'
+
+export function loadLayout(): PipelineLayout {
+  try {
+    return localStorage.getItem(VIEW_STORAGE_KEY) === 'table' ? 'table' : 'board'
+  } catch {
+    return 'board'
+  }
+}
+
+export function saveLayout(l: PipelineLayout): void {
+  try {
+    localStorage.setItem(VIEW_STORAGE_KEY, l)
+  } catch {
+    // storage blocked
   }
 }

@@ -436,12 +436,12 @@ The product is built so that this script works every time. Use the deployed URL 
 
 | Time | Beat | On screen | Rubric line |
 |---|---|---|---|
-| 0:00–0:25 | The problem in BIAI's words: four channels, lost enquiries, no follow-up view | Board loads: 17 in the pipeline, 2 in the Not-a-lead tray | Loom, usability |
-| 0:25–1:10 | **Morning routine:** urgent and overdue at a glance; Habibur's refund threat at the top; spam and job seeker kept out in the tray | S1, open #16, show call script | Usability, smart AI |
-| 1:10–1:50 | **Lost enquiry caught:** Rafi asked twice, merged, escalated to urgent; one click → Banglish reply → mark as sent → moves to Contacted | S2 timeline, reply | Usability, Bangla |
-| 1:50–2:40 | **Live paste:** an invented Bangla message from a company → fields fill, team size from Bangla digits, priority high with reason, low-confidence field highlighted; reply in Bangla, switch to Banglish | S3 → S2 | Smart AI, Bangla, works end to end |
-| 2:40–3:15 | **No invented facts:** certificate question (#17) → reply only says what the FAQ says; number guard explained in one line | S2 reply panel | Smart AI, explain choices |
-| 3:15–3:45 | **Weekly summary:** numbers from code, words from AI, "chase first" list | S4 | Extras, smart AI |
+| 0:00–0:25 | The problem in BIAI's words: four channels, lost enquiries, no follow-up view | **Today** screen: "6 people are overdue and 2 are urgent", five KPI cards | Loom, usability |
+| 0:25–1:10 | **Morning routine:** Needs you now, Habibur's refund threat at the top → Call → call script; › to the next person | Today → contact panel | Usability, smart AI |
+| 1:10–1:50 | **Lost enquiry caught:** Rafi asked twice, merged (two bubbles + merge line), escalated to urgent; Banglish reply that apologises → Mark as sent → Contacted | Contact panel | Usability, Bangla |
+| 1:50–2:40 | **Live paste:** New enquiry → invented Bangla company message → fields fill, team size from Bangla digits, priority with reason, AI-unsure field in amber → Save → Bangla reply, switch to Banglish | New enquiry → contact panel | Smart AI, Bangla, works end to end |
+| 2:40–3:15 | **No invented facts:** search "Nowshin" (#17 certificate) → reply only says what the FAQ says; number guard in one line | Search → contact panel | Smart AI, explain choices |
+| 3:15–3:45 | **Pipeline + weekly summary:** board fits one screen, sort, Not a lead tab; Reports: numbers from code, words from AI, "chase first" | Pipeline → Reports | Extras, smart AI |
 | 3:45–4:25 | **We measured it:** eval table, one honest mismatch explained; AI where judgement is needed, code where it isn't; DeepSeek with Gemini fallback | `eval/report.md` | Smart AI, explain choices |
 | 4:25–5:00 | What doesn't work yet + what's next; close on "BIAI could start using this tomorrow" | Slide or README | Explain choices, Loom |
 

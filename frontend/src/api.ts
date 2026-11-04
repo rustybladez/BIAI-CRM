@@ -171,6 +171,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 export const api = {
   meta: () => request<Meta>('GET', '/meta'),
   contacts: () => request<ContactSummary[]>('GET', '/contacts'),
+  search: (q: string) => request<ContactSummary[]>('GET', `/contacts?q=${encodeURIComponent(q)}`),
   contact: (id: number) => request<ContactDetail>('GET', `/contacts/${id}`),
   updateContact: (id: number, update: ContactUpdate) => request<ContactDetail>('PATCH', `/contacts/${id}`, update),
   reply: (id: number, language?: string, regenerate = false) =>
@@ -206,7 +207,11 @@ export type WeeklyStats = {
   pipeline_by_interest: Record<string, number>
   contacts_by_language: Record<string, number>
   missing_phone: number
-  corporate: { leads: number; total_people_to_train: number }
+  corporate: {
+    leads: number
+    total_people_to_train: number
+    list: { contact_id: number; name: string | null; company: string | null; team_size: number | null; status: string | null }[]
+  }
 }
 
 export type WeeklyReport = {

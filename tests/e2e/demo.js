@@ -1,183 +1,229 @@
-// Browser run of the PRD §12 demo script (Playwright, Chromium).
+// Browser run of the PRD §12 demo flow on the redesigned UI (Playwright, Chromium).
 // Usage: BASE=http://localhost:8000 node tests/e2e/demo.js   (needs the 'playwright' package)
-// Calls the live AI for the paste step. Resets the demo first. Screenshots go to SHOTS (default /tmp/biai-shots/).
+// Calls the live AI for the paste step and the weekly summary. Resets the demo first.
+// Screenshots go to SHOTS (default /tmp/biai-shots/).
 const { chromium } = require('playwright');
-const BASE = process.env.BASE || 'http://localhost:8014';
+const BASE = process.env.BASE || 'http://localhost:8000';
 const S = (process.env.SHOTS || '/tmp/biai-shots') + '/';
 require('fs').mkdirSync(S, { recursive: true });
+
 (async () => {
   const b = await chromium.launch();
-  const ctx = await b.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+  const ctx = await b.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 });
   const p = await ctx.newPage();
   const errs = [];
-  p.on('console', m => m.type() === 'error' && errs.push(m.text()));
-  p.on('pageerror', e => errs.push('pageerror: ' + e.message));
-  p.on('dialog', d => d.accept());
-  const step = async (name, fn) => { const t = Date.now(); try { await fn(); console.log('OK  ', name, `(${Date.now()-t} ms)`); } catch (e) { console.log('FAIL', name, e.message.split('\n')[0]); await p.screenshot({ path: S + 'fail-' + name.replace(/\W+/g,'_') + '.png' }); } try { await close(); } catch {} };
-  const col = s => p.getByTestId('column-' + s);
+  p.on('console', (m) => m.type() === 'error' && errs.push(m.text()));
+  p.on('pageerror', (e) => errs.push('pageerror: ' + e.message));
+  let failed = 0;
+
+  const panel = () => p.getByRole('dialog', { name: 'Contact details' });
+  const close = async () => {
+    if (await panel().count()) {
+      await p.keyboard.press('Escape');
+      await panel().waitFor({ state: 'detached' });
+    }
+  };
+  const step = async (name, fn) => {
+    const t = Date.now();
+    try {
+      await fn();
+      console.log('OK  ', name, `(${Date.now() - t} ms)`);
+    } catch (e) {
+      failed++;
+      console.log('FAIL', name, e.message.split('\n')[0]);
+      await p.screenshot({ path: S + 'fail-' + name.replace(/\W+/g, '_') + '.png' });
+    }
+    try {
+      await close();
+    } catch {}
+  };
+  const nav = (name) => p.getByRole('navigation', { name: 'Main' }).getByRole('button', { name });
+  const col = (s) => p.getByTestId('column-' + s);
   const card = (status, name) => col(status).locator('[data-testid^=card-]').filter({ hasText: name }).first();
-  const close = async () => { if (await drawer().count()) { await p.keyboard.press('Escape'); await drawer().waitFor({ state: 'detached' }); } };
-  const replyText = () => drawer().getByRole('textbox', { name: 'Reply text' });
-  const drawer = () => p.getByRole('dialog', { name: 'Contact details' });
+  const replyText = () => panel().getByRole('textbox', { name: 'Reply text' });
+  const cards = () => p.locator('[data-testid^=column-] [data-testid^=card-]');
+  const search = async (q) => {
+    const box = p.getByRole('textbox', { name: 'Search contacts' });
+    await box.fill(q);
+    await p.locator('[data-radix-popper-content-wrapper]').getByText(q, { exact: false }).first().waitFor();
+    await box.press('Enter');
+    await panel().waitFor();
+  };
 
   // Reset from inside the page (the browser uses the network proxy; Playwright's request API may not).
   await p.goto(BASE);
   await p.evaluate(async () => {
     await fetch('/api/demo/reset', { method: 'POST' });
-    await fetch('/api/demo/clock', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ demo_now: '2026-10-28T12:00' }) });
   });
-  await step('1 board loads: 17 in pipeline, 2 not a lead', async () => {
-    await p.goto(BASE); await p.getByText('in the pipeline').waitFor();
-    const n = await p.locator('[data-testid^=column-] [data-testid^=card-]').count();
-    if (n !== 17) throw new Error('pipeline cards ' + n);
-    const tray = await p.getByRole('region', { name: 'Not a lead' }).innerText();
-    if (!/Not a lead\s*2/.test(tray)) throw new Error(tray.slice(0, 80));
-    console.log('     header:', await p.getByTestId('urgent-count').innerText(), '|', await p.getByTestId('overdue-count').innerText(), '|', await p.getByTestId('demo-now').innerText());
-    await p.screenshot({ path: S + '1-board.png' });
+  await p.evaluate(() => localStorage.clear());
+  await p.reload();
+
+  await step('1 Today: status line, KPIs, queue, AI brief (seeded, no AI call)', async () => {
+    await p.goto(BASE + '/#today');
+    const h = await p.getByTestId('today-headline').innerText();
+    if (!h.includes('6 people are overdue and 2 are urgent')) throw new Error(h);
+    if (!(await p.getByTestId('kpi-waiting').innerText()).includes('17')) throw new Error('waiting kpi');
+    const rows = await p.getByTestId('queue').getByRole('listitem').count();
+    if (rows !== 17) throw new Error('queue rows ' + rows);
+    const first = await p.getByTestId('queue').getByRole('listitem').first().innerText();
+    if (!first.includes('Habibur Rahman')) throw new Error('queue top ' + first.slice(0, 40));
+    await p.getByTestId('brief').waitFor();
+    await p.screenshot({ path: S + '1-today.png' });
   });
-  await step('1a sort switch: priority first (default) vs overdue first, remembered on reload', async () => {
-    const firstNew = async () => (await col('New').locator('[data-testid^=card-]').first().innerText()).split('\n');
-    const radio = n => p.getByRole('radio', { name: n });
-    if ((await radio('Priority first').getAttribute('aria-checked')) !== 'true') throw new Error('default not priority');
-    const a = await firstNew();
-    if (!a.includes('Rafi Ahmed')) throw new Error('priority mode top: ' + a.join(' | '));
-    await p.screenshot({ path: S + '1a-sort-priority.png' });
+
+  await step('1a Pipeline fits the screen; 17 cards; columns scroll; Not a lead tab', async () => {
+    await nav('Pipeline').click();
+    await col('New').waitFor();
+    const n = await cards().count();
+    if (n !== 17) throw new Error('cards ' + n);
+    const pageScroll = await p.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+    if (pageScroll > 2) throw new Error('page scrolls by ' + pageScroll);
+    if (!(await p.getByTestId('column-scroll-New').evaluate((e) => e.scrollHeight > e.clientHeight))) throw new Error('New column does not scroll');
+    await p.screenshot({ path: S + '1a-board.png' });
+    await p.getByRole('tab', { name: /Not a lead/ }).click();
+    const t = await p.getByTestId('contact-table').innerText();
+    if (!t.includes('Arif Hossain')) throw new Error('not a lead table');
+    await p.getByRole('tab', { name: /Pipeline/ }).click();
+  });
+
+  await step('1b sort: priority first (default) vs overdue first, remembered on reload', async () => {
+    const top = async () => (await col('New').locator('[data-testid^=card-]').first().innerText()).split('\n')[0];
+    const radio = (n) => p.getByRole('radio', { name: n });
+    if ((await radio('Priority first').getAttribute('aria-checked')) !== 'true') throw new Error('default');
+    if (!(await top()).includes('Rafi Ahmed')) throw new Error('priority top ' + (await top()));
     await radio('Overdue first').click();
-    const b = await firstNew();
-    if (!b.includes('Mahmud Hasan')) throw new Error('overdue mode top: ' + b.join(' | '));
-    console.log('     help:', await p.getByTestId('sort-help').innerText());
-    await p.screenshot({ path: S + '1a-sort-overdue.png' });
-    await p.reload(); await p.getByText('in the pipeline').waitFor();
+    if (!(await top()).includes('Mahmud Hasan')) throw new Error('overdue top ' + (await top()));
+    await p.reload();
+    await col('New').waitFor();
     if ((await radio('Overdue first').getAttribute('aria-checked')) !== 'true') throw new Error('not remembered');
     await radio('Priority first').click();
   });
-  await step('1b not-a-lead tray opens', async () => {
-    await p.getByRole('button', { name: /Not a lead/ }).click();
-    const tray = p.getByRole('region', { name: 'Not a lead' });
-    await tray.getByText('Arif Hossain', { exact: true }).waitFor();
-    console.log('     tray:', (await tray.innerText()).replace(/\s+/g, ' ').slice(0, 160));
+
+  await step('1c filter chips + table view', async () => {
+    await p.getByRole('button', { name: 'Filter' }).click();
+    await p.getByRole('button', { name: 'Corporate', exact: true }).click();
+    await p.keyboard.press('Escape');
+    const n = await cards().count();
+    if (n !== 3) throw new Error('corporate cards ' + n);
+    await p.getByRole('button', { name: 'Remove filter Corporate' }).click();
+    await p.getByRole('radio', { name: 'Table' }).click();
+    const rows = await p.getByTestId('contact-table').locator('tbody tr').count();
+    if (rows !== 17) throw new Error('table rows ' + rows);
+    await p.screenshot({ path: S + '1c-table.png' });
+    await p.getByRole('radio', { name: 'Board' }).click();
   });
-  await step('1c follow-ups: 6 overdue, seeded weekly summary (no AI), chase first opens contact', async () => {
-    await p.getByRole('button', { name: 'Follow-ups & summary' }).click();
-    const overdue = p.getByRole('region', { name: 'Overdue' });
-    await overdue.getByRole('button').first().waitFor();
-    const n = await overdue.getByRole('listitem').count();
-    if (n !== 6) throw new Error('overdue rows ' + n);
-    const chase = await p.getByTestId('chase-first').innerText();
-    for (const name of ['Habibur Rahman', 'Rafi Ahmed']) if (!chase.includes(name)) throw new Error('chase first missing ' + name);
-    console.log('     overview:', (await p.getByTestId('summary-overview').innerText()).slice(0, 120));
-    await p.screenshot({ path: S + '1c-followups.png', fullPage: true });
-    const csv = await p.evaluate(async () => { const r = await fetch('/api/export.csv'); return [r.status, (await r.text()).split('\n').length]; });
-    if (csv[0] !== 200 || csv[1] < 20) throw new Error('csv ' + csv);
-    await p.getByTestId('chase-first').getByRole('button', { name: 'Habibur Rahman' }).click();
-    await drawer().getByText('Call script').waitFor();
-    await close();
-    await p.getByRole('button', { name: 'Pipeline' }).click();
-    await p.getByTestId('column-New').waitFor();
-  });
-  await step('2 open Habibur: urgent, call script', async () => {
-    await card('Paid', 'Habibur Rahman').click();
-    await drawer().getByText('Call script').waitFor();
-    const t = await drawer().innerText() + await replyText().inputValue();
-    for (const s of ['Refund', 'May post publicly', 'Opening:', 'Overdue']) if (!t.includes(s)) throw new Error('missing ' + s);
+
+  await step('2 Habibur from the queue: call script, flags; next arrow steps to Rafi', async () => {
+    await nav('Today').click();
+    await p.getByTestId('queue').getByRole('listitem').first().getByRole('button', { name: 'Call', exact: true }).click();
+    await panel().getByText('Call script').waitFor();
+    const all = (await panel().innerText()) + (await replyText().inputValue());
+    for (const s of ['refund', 'may post publicly', 'opening:', 'call note by staff']) if (!all.toLowerCase().includes(s)) throw new Error('missing ' + s);
     await p.screenshot({ path: S + '2-habibur.png' });
+    await panel().getByRole('button', { name: /Next contact/ }).click();
+    await panel().getByRole('heading', { name: 'Rafi Ahmed' }).waitFor();
+    const pos = await panel().getByTestId('queue-position').innerText();
+    if (pos !== '2 of 17') throw new Error('position ' + pos);
   });
-  await step('3 Rafi: merged timeline, Banglish reply, mark sent -> Contacted', async () => {
+
+  await step('3 Rafi: two messages + merge line, Banglish reply with apology, Mark as sent -> Contacted', async () => {
+    await nav('Pipeline').click();
     await card('New', 'Rafi Ahmed').click();
-    const d = drawer(); await d.getByText('Asked again.').waitFor();
-    const t = await d.innerText();
-    if ((t.match(/from Rafi Ahmed/g) || []).length !== 2) throw new Error('timeline messages');
-    if (!(await d.getByRole('button', { name: 'Banglish' }).getAttribute('aria-pressed'))) throw new Error('lang');
+    const conv = panel().getByLabel('Conversation');
+    await conv.waitFor();
+    const t = await conv.innerText();
+    if ((t.match(/WhatsApp · Rafi Ahmed/g) || []).length !== 2) throw new Error('two messages');
+    if (!t.includes('merged into this contact')) throw new Error('merge line');
+    if ((await panel().getByRole('button', { name: 'Banglish' }).getAttribute('aria-pressed')) !== 'true') throw new Error('language');
+    if (!/dukkhito|sorry|deri/i.test(await replyText().inputValue())) throw new Error('no apology');
     await p.screenshot({ path: S + '3-rafi.png' });
-    await d.getByRole('button', { name: 'Mark as sent' }).click();
-    await d.getByText('Reply sent').first().waitFor();
+    await panel().getByRole('button', { name: 'Mark as sent' }).click();
+    await conv.getByText('You · marked as sent').waitFor();
+    await p.getByRole('status').filter({ hasText: 'moved to Contacted' }).waitFor();
     await close();
     await card('Contacted', 'Rafi Ahmed').waitFor();
   });
-  await step('4 live paste: Bangla company sample', async () => {
-    await p.getByRole('button', { name: 'Paste message' }).click();
-    const m = p.getByRole('dialog', { name: 'Paste a message' });
+
+  await step('4 New enquiry: Bangla company sample -> AI fields -> save -> Bangla reply (live)', async () => {
+    await p.getByRole('button', { name: 'New enquiry' }).click();
+    const m = p.getByRole('dialog', { name: 'New enquiry' });
     await m.getByRole('button', { name: /বাংলা · company/ }).click();
     await m.getByRole('button', { name: 'Analyse with AI' }).click();
-    await m.getByText('Check what the AI found').waitFor({ timeout: 60000 });
-    const ts = await m.getByLabel('Team size').inputValue().catch(() => '');
-    console.log('     team size:', ts, '| priority:', await m.locator('select').nth(4).inputValue().catch(()=>'?'), '| text:', (await m.getByText(/New contact/).innerText().catch(()=> '')).slice(0,60));
-    await p.screenshot({ path: S + '4-analyse.png', fullPage: true });
+    await m.getByText('Check what the AI found').waitFor({ timeout: 90000 });
+    const ts = await m.getByLabel('Team size').inputValue();
+    if (ts !== '30') throw new Error('team size ' + ts);
+    if (!(await m.innerText()).includes('01988765432')) throw new Error('phone from Bangla digits');
+    await p.screenshot({ path: S + '4-intake.png' });
     await m.getByRole('button', { name: 'Save contact' }).click();
-    await drawer().getByText('Nusrat Jahan', { exact: false }).first().waitFor();
-    await drawer().getByRole('textbox', { name: 'Reply text' }).waitFor({ timeout: 60000 });
-    const body = await drawer().getByRole('textbox', { name: 'Reply text' }).inputValue();
-    if (!/[ঀ-৿]/.test(body)) throw new Error('reply not Bangla: ' + body.slice(0, 60));
+    await panel().getByRole('heading', { name: 'Nusrat Jahan' }).waitFor();
+    await replyText().waitFor({ timeout: 90000 });
+    const body = await replyText().inputValue();
+    if (!/[ঀ-৿]/.test(body)) throw new Error('reply not Bangla');
     await p.screenshot({ path: S + '4-new-contact.png' });
   });
-  await step('4b switch to Banglish (live)', async () => {
-    await card('New', 'Nusrat Jahan').click();
-    const d = drawer(); await replyText().waitFor({ timeout: 60000 });
-    await d.getByRole('button', { name: 'Banglish' }).click();
-    await d.getByText('Writing a reply').waitFor({ state: 'detached', timeout: 60000 });
-    const body = await d.getByRole('textbox', { name: 'Reply text' }).inputValue();
+
+  await step('4b switch the reply to Banglish (live)', async () => {
+    await search('Nusrat');
+    await replyText().waitFor({ timeout: 60000 });
+    await panel().getByRole('button', { name: 'Banglish' }).click();
+    await panel().getByText('Writing a reply').waitFor({ state: 'detached', timeout: 90000 });
+    const body = await replyText().inputValue();
     if (/[ঀ-৿]/.test(body) || body.length < 20) throw new Error('banglish? ' + body.slice(0, 60));
-    console.log('     ', body.slice(0, 110));
-    await p.screenshot({ path: S + '4b-banglish.png' });
   });
-  await step('5 #17 certificate: not govt approved, FAQ chip', async () => {
-    await card('New', 'Nowshin').click();
-    const d = drawer(); await replyText().waitFor();
+
+  await step('5 search Nowshin: certificate reply says not government approved', async () => {
+    await search('Nowshin');
     const body = await replyText().inputValue();
     if (!/not|\bna\b|নয়/i.test(body)) throw new Error(body);
-    await d.getByText('certificate', { exact: true }).waitFor();
-    await d.getByText(/Demo FAQ, placeholder values/).waitFor();
+    await panel().getByText('certificate', { exact: true }).waitFor();
+    await panel().getByText('Demo FAQ, placeholder values').waitFor();
   });
+
   await step('6 drag Samira New -> Interested', async () => {
+    await nav('Pipeline').click();
     await card('New', 'Samira').dragTo(col('Interested'));
     await card('Interested', 'Samira').waitFor();
   });
-  await step('7 filters: corporate + overdue toggle', async () => {
-    await p.getByLabel('Interests').selectOption('corporate');
-    const n = await p.locator('[data-testid^=column-] [data-testid^=card-]').count();
-    await p.getByRole('button', { name: 'Clear filters' }).click();
-    await p.getByTestId('overdue-count').click();
-    const o = await p.locator('[data-testid^=column-] [data-testid^=card-]').count();
-    await p.getByTestId('overdue-count').click();
-    console.log('     corporate cards:', n, '| overdue-only cards:', o);
-    if (n !== 4) throw new Error('corporate ' + n);
+
+  await step('7 click-to-edit a property and add a note', async () => {
+    await search('Nusrat');
+    await panel().getByRole('button', { name: 'Edit Company' }).click();
+    await panel().getByRole('textbox', { name: 'Company' }).fill('Tejgaon Pharma Ltd');
+    await panel().getByRole('button', { name: 'Save', exact: true }).click();
+    await panel().getByText('Tejgaon Pharma Ltd').first().waitFor();
+    await panel().getByLabel('Add a note').fill('Called, sending proposal');
+    await panel().getByRole('button', { name: 'Add', exact: true }).click();
+    await panel().getByLabel('Conversation').getByText('Called, sending proposal').waitFor();
   });
-  await step('8 edit a field clears the AI-unsure mark; add note', async () => {
-    await card('New', 'Nusrat Jahan').click();
-    const d = drawer(); await d.getByRole('heading', { name: 'Details' }).waitFor();
-    const unsure = await d.getByText('AI unsure, please check').count();
-    await d.getByLabel(/Company/).fill('Tejgaon Pharma Ltd');
-    await d.getByRole('button', { name: 'Save changes' }).click();
-    await d.getByRole('button', { name: 'Save changes' }).and(p.locator(':disabled')).waitFor();
-    const after = await d.getByText('AI unsure, please check').count();
-    console.log('     unsure marks after editing company:', after);
-    await d.getByPlaceholder('Add a note…').fill('Called, sending proposal');
-    await d.getByRole('button', { name: 'Add' }).click();
-    await d.getByText('Called, sending proposal').waitFor();
-    console.log('     unsure marks before edit:', unsure);
-  });
-  await step('9 demo clock -> 26 Oct 10:00 lowers overdue', async () => {
-    const before = await p.getByTestId('overdue-count').innerText();
+
+  await step('8 demo clock -> 26 Oct 10:00: nobody overdue yet', async () => {
+    await nav('Today').click();
     await p.getByTestId('demo-now').click();
     await p.getByLabel('Demo time').fill('2026-10-26T10:00');
-    await p.getByRole('button', { name: 'Set', exact: true }).click();
-    await p.getByText('Mon 26 Oct').waitFor();
-    console.log('     overdue before/after:', before, '/', await p.getByTestId('overdue-count').innerText());
+    await p.getByRole('button', { name: 'Set demo time' }).click();
+    await p.getByTestId('demo-now').filter({ hasText: 'Mon 26 Oct' }).waitFor();
+    const k = await p.getByTestId('kpi-waiting').innerText();
+    if (!k.includes('0 overdue')) throw new Error(k);
   });
-  await step('9b data changed -> generate weekly summary live', async () => {
-    await p.getByRole('button', { name: 'Follow-ups & summary' }).click();
+
+  await step('9 Reports: data changed -> generate weekly summary live, numbers checked', async () => {
+    await nav('Reports').click();
     await p.getByRole('button', { name: 'Generate weekly summary' }).click();
     await p.getByTestId('summary-overview').waitFor({ timeout: 90000 });
-    if (await p.getByText('Check: these numbers are not in the computed figures').count()) throw new Error('unverified numbers in summary');
-    console.log('     live overview:', (await p.getByTestId('summary-overview').innerText()).slice(0, 120));
-    await p.getByRole('button', { name: 'Pipeline' }).click();
+    if (await p.getByText('Check: these numbers are not in the computed figures').count()) throw new Error('unverified numbers');
+    await p.screenshot({ path: S + '9-reports.png' });
   });
-  await step('10 reset demo', async () => {
-    await p.getByRole('button', { name: 'Reset demo' }).click();
-    await card('New', 'Rafi Ahmed').waitFor();
-    const n = await p.locator('[data-testid^=column-] [data-testid^=card-]').count();
-    if (n !== 17) throw new Error('after reset ' + n);
+
+  await step('10 reset demo data (in-page confirm) restores data and clock', async () => {
+    await p.getByRole('button', { name: 'Reset demo data' }).click();
+    await p.getByRole('button', { name: 'Reset', exact: true }).click();
+    await p.getByRole('status').filter({ hasText: 'Demo data reset' }).waitFor();
+    await nav('Today').click();
+    const h = await p.getByTestId('today-headline').innerText();
+    if (!h.includes('6 people are overdue and 2 are urgent')) throw new Error(h);
   });
+
   console.log('console errors:', errs.length ? errs : 'none');
   await b.close();
+  process.exit(failed || errs.length ? 1 : 0);
 })();

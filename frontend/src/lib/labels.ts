@@ -159,3 +159,35 @@ export function toLocalInput(iso: string | null | undefined): string {
 export function demoNowIso(demoNow: string): string {
   return `${demoNow}:00+06:00`
 }
+
+// ---- Status colours (pill per pipeline stage) ----
+export const STATUS_STYLE: Record<string, string> = {
+  New: 'bg-sky-50 text-sky-700 ring-sky-200',
+  Contacted: 'bg-amber-50 text-amber-800 ring-amber-200',
+  Interested: 'bg-violet-50 text-violet-700 ring-violet-200',
+  Paid: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  Lost: 'bg-slate-100 text-slate-600 ring-slate-200',
+}
+export const STATUS_BAR: Record<string, string> = {
+  New: 'bg-sky-400',
+  Contacted: 'bg-amber-400',
+  Interested: 'bg-violet-400',
+  Paid: 'bg-emerald-400',
+  Lost: 'bg-slate-300',
+}
+
+/** Whole hours between an ISO time and the demo clock. */
+export function hoursSince(iso: string | null | undefined, nowIso: string): number | null {
+  if (!iso) return null
+  return Math.max(0, Math.floor((new Date(nowIso).getTime() - new Date(iso).getTime()) / 3_600_000))
+}
+
+export function waitLabel(h: number | null): string {
+  if (h === null) return ''
+  if (h < 100) return `${h} h`
+  return `${Math.floor(h / 24)} d`
+}
+
+export function firstName(name: string | null): string {
+  return name?.split(' ')[0] ?? 'there'
+}

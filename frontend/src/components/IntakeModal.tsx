@@ -1,7 +1,8 @@
 import { GitMerge, Sparkles, TriangleAlert, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api, type AnalyseResult, type Extraction, type IntakeMessage, type Meta } from '../api'
-import { FIELD_LABEL, FLAG, INTEREST_LABEL, LANGUAGE_NAME, TYPE_LABEL } from '../lib/labels'
+import { CHANNEL, FIELD_LABEL, FLAG, INTEREST_LABEL, LANGUAGE_NAME, TYPE_LABEL } from '../lib/labels'
+import { ChannelIcon } from './ContactCard'
 import { Button, Chip, ErrorNote, Spinner } from './ui'
 import { cx, inputClass } from '../lib/ui'
 
@@ -149,170 +150,210 @@ export function IntakeModal({
       </select>,
     )
 
+  const isManual = result?.model_used === 'entered by hand'
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 sm:p-8" role="dialog" aria-modal="true" aria-label="Paste a message">
-      <div className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-slate-900">Paste a message</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100" aria-label="Close">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 sm:p-8" role="dialog" aria-modal="true" aria-label="New enquiry">
+      <div className="w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-3.5">
+          <h2 className="text-lg font-semibold text-slate-900">New enquiry</h2>
+          <ol className="ml-2 hidden items-center gap-1.5 text-xs text-slate-400 sm:flex" aria-label="Steps">
+            <li className={cx(!result && 'font-semibold text-indigo-700')}>1 Paste</li>
+            <li>→</li>
+            <li className={cx(result && 'font-semibold text-indigo-700')}>2 Check</li>
+            <li>→</li>
+            <li>3 Save</li>
+          </ol>
+          <button onClick={onClose} className="ml-auto rounded-lg p-1.5 text-slate-500 hover:bg-slate-100" aria-label="Close">
             <X className="size-5" />
           </button>
         </div>
 
-        <div className="space-y-4 px-6 py-5">
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="text-slate-500">Try an invented example:</span>
-            {SAMPLES.map((s) => (
-              <button
-                key={s.label}
-                onClick={() => {
-                  setMsg({ ...s.msg, received_at: meta.demo_now })
-                  setResult(null)
-                  setError(null)
-                }}
-                className="rounded-full bg-slate-100 px-3 py-1 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700"
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block">
-              <span className="text-xs font-medium text-slate-500">Channel</span>
-              <select value={msg.channel} onChange={(e) => setMsg({ ...msg, channel: e.target.value })} className={inputClass}>
+        <div className="grid md:grid-cols-2">
+          {/* Left: the message */}
+          <div
+            className="space-y-3.5 px-6 py-5"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && canAnalyse && !busy) void analyse()
+            }}
+          >
+            <div className="flex flex-wrap items-center gap-1.5 text-sm">
+              <span className="text-slate-500">Invented examples:</span>
+              {SAMPLES.map((s) => (
+                <button
+                  key={s.label}
+                  onClick={() => {
+                    setMsg({ ...s.msg, received_at: meta.demo_now })
+                    setResult(null)
+                    setError(null)
+                  }}
+                  className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[13px] text-slate-700 hover:bg-indigo-50 hover:text-indigo-700"
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            <fieldset>
+              <legend className="mb-1 text-xs font-medium text-slate-500">Channel</legend>
+              <div className="flex flex-wrap gap-1.5">
                 {meta.channels.map((c) => (
-                  <option key={c}>{c}</option>
+                  <button
+                    key={c}
+                    type="button"
+                    aria-pressed={msg.channel === c}
+                    onClick={() => setMsg({ ...msg, channel: c })}
+                    className={cx(
+                      'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-medium ring-1 transition',
+                      msg.channel === c ? 'bg-indigo-600 text-white ring-indigo-600' : 'bg-white text-slate-700 ring-slate-200 hover:ring-indigo-300',
+                    )}
+                  >
+                    <ChannelIcon channel={c} />
+                    {CHANNEL[c]?.short ?? c}
+                  </button>
                 ))}
-              </select>
-            </label>
+              </div>
+            </fieldset>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block">
+                <span className="text-xs font-medium text-slate-500">Sender name (as shown in the app)</span>
+                <input value={msg.sender_name} onChange={(e) => setMsg({ ...msg, sender_name: e.target.value })} className={inputClass} />
+              </label>
+              <label className="block">
+                <span className="text-xs font-medium text-slate-500">Phone (optional)</span>
+                <input value={msg.phone ?? ''} onChange={(e) => setMsg({ ...msg, phone: e.target.value })} className={inputClass} />
+              </label>
+            </div>
             <label className="block">
-              <span className="text-xs font-medium text-slate-500">Received</span>
-              <input
-                type="datetime-local"
-                value={msg.received_at ?? ''}
-                onChange={(e) => setMsg({ ...msg, received_at: e.target.value })}
-                className={inputClass}
+              <span className="text-xs font-medium text-slate-500">Message (Bangla, Banglish or English)</span>
+              <textarea
+                rows={6}
+                value={msg.message}
+                onChange={(e) => setMsg({ ...msg, message: e.target.value })}
+                placeholder="Paste the message here…"
+                className={cx(inputClass, 'text-[15px] leading-relaxed')}
               />
             </label>
             <label className="block">
-              <span className="text-xs font-medium text-slate-500">Sender name (as shown in the app)</span>
-              <input value={msg.sender_name} onChange={(e) => setMsg({ ...msg, sender_name: e.target.value })} className={inputClass} />
+              <span className="text-xs font-medium text-slate-500">Received</span>
+              <input type="datetime-local" value={msg.received_at ?? ''} onChange={(e) => setMsg({ ...msg, received_at: e.target.value })} className={inputClass} />
             </label>
-            <label className="block">
-              <span className="text-xs font-medium text-slate-500">Phone (optional)</span>
-              <input value={msg.phone ?? ''} onChange={(e) => setMsg({ ...msg, phone: e.target.value })} className={inputClass} />
-            </label>
+            <div className="flex items-center gap-3">
+              <Button variant="primary" onClick={analyse} disabled={!canAnalyse} loading={busy === 'analyse'}>
+                <Sparkles className="size-4" /> Analyse with AI
+              </Button>
+              <span className="text-xs text-slate-400">Ctrl + Enter</span>
+            </div>
           </div>
-          <label className="block">
-            <span className="text-xs font-medium text-slate-500">Message (Bangla, Banglish or English)</span>
-            <textarea
-              rows={4}
-              value={msg.message}
-              onChange={(e) => setMsg({ ...msg, message: e.target.value })}
-              className={cx(inputClass, 'text-[15px] leading-relaxed')}
-            />
-          </label>
 
-          <div className="flex items-center gap-3">
-            <Button variant="primary" onClick={analyse} disabled={!canAnalyse} loading={busy === 'analyse'}>
-              <Sparkles className="size-4" /> Analyse with AI
-            </Button>
-            {busy === 'analyse' && <Spinner label="Reading the message… (a few seconds)" />}
-          </div>
-          {error && <ErrorNote message={error} onRetry={result ? save : analyse} />}
-          {error && !result && (
-            <p className="text-sm text-slate-600">
-              Or{' '}
-              <button onClick={fillByHand} className="font-medium text-indigo-700 underline">
-                fill in the details by hand
-              </button>{' '}
-              so the enquiry is not lost.
-            </p>
-          )}
-
-          {result && ex && (
-            <section className="space-y-3 rounded-2xl border border-slate-200 p-4" aria-label="Review">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="font-semibold text-slate-900">
-                  {result.model_used === 'entered by hand' ? 'Fill in the details' : 'Check what the AI found'}
-                </h3>
-                <span className="text-xs text-slate-500">
-                  {result.model_used} · {result.latency_ms} ms
-                </span>
+          {/* Right: what the AI found */}
+          <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 px-6 py-5 md:border-l md:border-t-0" aria-label="Review">
+            {!result && !busy && !error && (
+              <div className="my-auto space-y-2 py-6 text-sm text-slate-600">
+                <p className="font-semibold text-slate-800">The AI will read the message and fill in:</p>
+                <ul className="list-disc space-y-1 pl-5">
+                  <li>who it is (name, role, company, team size, phone in the text)</li>
+                  <li>what they want, the language, and whether it is a lead, support, a complaint or spam</li>
+                  <li>priority with a reason, and any deadline ("tomorrow after 5 PM")</li>
+                </ul>
+                <p className="text-slate-500">You check everything before it is saved. Fields the AI is unsure about are marked in amber.</p>
               </div>
-
-              {result.duplicate ? (
-                <div className="flex gap-2 rounded-lg bg-indigo-50 p-3 text-sm text-indigo-900 ring-1 ring-indigo-200">
-                  <GitMerge className="mt-0.5 size-4 shrink-0" aria-hidden />
-                  <span>
-                    Same phone as <strong>{result.duplicate.name ?? 'an existing contact'}</strong>: this message will be merged
-                    into their record.
-                    {result.duplicate.would_escalate && (
-                      <strong className="text-red-700"> They asked before and got no reply, so they will become urgent.</strong>
-                    )}
-                  </span>
-                </div>
-              ) : (
-                <p className="text-sm text-slate-600">
-                  New contact
-                  {result.phone ? `, phone ${result.phone}` : ''}
-                  {result.missing_phone && (
-                    <span className="text-amber-800"> · no phone number yet (the reply will ask for one)</span>
-                  )}
-                  {result.status === null && <span> · will go to "Not a lead"</span>}
-                </p>
-              )}
-
-              <div className="grid grid-cols-2 gap-x-3 gap-y-1 sm:grid-cols-3">
-                {exText('name')}
-                {exText('role')}
-                {exText('company')}
-                {exField(
-                  'team_size',
-                  <input
-                    type="number"
-                    min={1}
-                    value={ex.team_size ?? ''}
-                    onChange={(e) => setEx({ ...ex, team_size: e.target.value ? Number(e.target.value) : null })}
-                    className={inputClass}
-                  />,
-                )}
-                {exSelect('message_type', meta.message_types.map((t) => ({ value: t, label: TYPE_LABEL[t] ?? t })))}
-                {exSelect('interest', meta.interests.map((i) => ({ value: i, label: INTEREST_LABEL[i] ?? i })))}
-                {exSelect('language', meta.languages.map((l) => ({ value: l, label: LANGUAGE_NAME[l] ?? l })))}
-                {exSelect('priority', meta.priorities.map((p) => ({ value: p, label: p })))}
-                {exField(
-                  'follow_up_by',
-                  <input
-                    type="datetime-local"
-                    value={ex.follow_up_by ?? ''}
-                    onChange={(e) => setEx({ ...ex, follow_up_by: e.target.value || null })}
-                    className={inputClass}
-                  />,
-                )}
-                <div className="col-span-2 sm:col-span-3">{exText('summary')}</div>
+            )}
+            {busy === 'analyse' && (
+              <div className="my-auto py-6">
+                <Spinner label="Reading the message… (a few seconds)" />
               </div>
+            )}
+            {error && <ErrorNote message={error} onRetry={result ? save : analyse} />}
+            {error && !result && (
               <p className="text-sm text-slate-600">
-                <span className="font-medium">Priority reason:</span> {ex.priority_reason}
+                Or{' '}
+                <button onClick={fillByHand} className="font-medium text-indigo-700 underline">
+                  fill in the details by hand
+                </button>{' '}
+                so the enquiry is not lost.
               </p>
-              {ex.flags.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {ex.flags.map((f) => (
-                    <Chip key={f} className="bg-slate-100 text-slate-700">
-                      {FLAG[f]?.label ?? f}
-                    </Chip>
-                  ))}
+            )}
+
+            {result && ex && (
+              <section className="flex flex-1 flex-col gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-semibold text-slate-900">{isManual ? 'Fill in the details' : 'Check what the AI found'}</h3>
+                  {!isManual && (
+                    <span className="text-xs text-slate-500">
+                      {result.model_used} · {(result.latency_ms / 1000).toFixed(1)} s
+                    </span>
+                  )}
                 </div>
-              )}
-              <div className="flex justify-end gap-2">
-                <Button onClick={onClose}>Cancel</Button>
-                <Button variant="primary" onClick={save} loading={busy === 'save'}>
-                  {result.duplicate ? 'Save and merge' : 'Save contact'}
-                </Button>
-              </div>
-            </section>
-          )}
+
+                {result.duplicate ? (
+                  <div className="flex gap-2 rounded-lg bg-indigo-50 p-3 text-sm text-indigo-900 ring-1 ring-indigo-200">
+                    <GitMerge className="mt-0.5 size-4 shrink-0" aria-hidden />
+                    <span>
+                      Same phone as <strong>{result.duplicate.name ?? 'an existing contact'}</strong>: this message will be merged into their record.
+                      {result.duplicate.would_escalate && <strong className="text-red-700"> They asked before and got no reply, so they will become urgent.</strong>}
+                    </span>
+                  </div>
+                ) : (
+                  <p className="rounded-lg bg-white px-3 py-2 text-sm text-slate-600 ring-1 ring-slate-200">
+                    New contact
+                    {result.phone ? `, phone ${result.phone}` : ''}
+                    {result.missing_phone && <span className="text-amber-800"> · no phone number yet (the reply will ask for one)</span>}
+                    {result.status === null && <span> · will go to "Not a lead"</span>}
+                  </p>
+                )}
+
+                <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
+                  {exText('name')}
+                  {exText('role')}
+                  {exText('company')}
+                  {exField(
+                    'team_size',
+                    <input
+                      type="number"
+                      min={1}
+                      value={ex.team_size ?? ''}
+                      onChange={(e) => setEx({ ...ex, team_size: e.target.value ? Number(e.target.value) : null })}
+                      className={inputClass}
+                      aria-label="Team size"
+                    />,
+                  )}
+                  {exSelect('message_type', meta.message_types.map((t) => ({ value: t, label: TYPE_LABEL[t] ?? t })))}
+                  {exSelect('interest', meta.interests.map((i) => ({ value: i, label: INTEREST_LABEL[i] ?? i })))}
+                  {exSelect('language', meta.languages.map((l) => ({ value: l, label: LANGUAGE_NAME[l] ?? l })))}
+                  {exSelect('priority', meta.priorities.map((p) => ({ value: p, label: p })))}
+                  <div className="col-span-2">
+                    {exField(
+                      'follow_up_by',
+                      <input
+                        type="datetime-local"
+                        value={ex.follow_up_by ?? ''}
+                        onChange={(e) => setEx({ ...ex, follow_up_by: e.target.value || null })}
+                        className={inputClass}
+                      />,
+                    )}
+                  </div>
+                  <div className="col-span-2">{exText('summary')}</div>
+                </div>
+                <p className="text-sm text-slate-600">
+                  <span className="font-medium">Why {ex.priority}:</span> {ex.priority_reason}
+                </p>
+                {ex.flags.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {ex.flags.map((f) => (
+                      <Chip key={f} className="bg-white text-slate-700 ring-1 ring-slate-200">
+                        {FLAG[f]?.label ?? f}
+                      </Chip>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-auto flex justify-end gap-2 pt-2">
+                  <Button onClick={onClose}>Cancel</Button>
+                  <Button variant="primary" onClick={save} loading={busy === 'save'}>
+                    {result.duplicate ? 'Save and merge' : 'Save contact'}
+                  </Button>
+                </div>
+              </section>
+            )}
+          </div>
         </div>
       </div>
     </div>

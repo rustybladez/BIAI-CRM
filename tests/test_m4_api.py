@@ -246,3 +246,18 @@ def test_reset_restores_demo_clock(seeded):
     client.put("/api/demo/clock", json={"demo_now": "2026-10-26T10:00"})
     client.post("/api/demo/reset")
     assert client.get("/api/meta").json()["demo_now"] == "2026-10-28T12:00"
+
+
+@pytest.mark.parametrize(
+    ("q", "expected"),
+    [
+        ("rafi", [1]),
+        ("textile", [3]),
+        ("বিকাশে", [7]),
+        ("01711000015", [16]),
+        ("০১৭১১০০০০০১", [1]),
+        ("zzz", []),
+    ],
+)
+def test_search(seeded, q, expected):
+    assert seed_ids(seeded, client.get("/api/contacts", params={"q": q}).json()) == expected

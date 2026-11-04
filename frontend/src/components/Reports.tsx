@@ -1,47 +1,10 @@
-import { CalendarClock, Clock, Download, Sparkles, TriangleAlert } from 'lucide-react'
+import { Download, ShieldCheck, Sparkles, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { reports, type ContactSummary, type Followups, type WeeklyReport } from '../api'
-import { CHANNEL, INTEREST_LABEL, LANGUAGE_NAME, displayName, formatWhen } from '../lib/labels'
+import { reports, type WeeklyReport } from '../api'
+import { CHANNEL, INTEREST_LABEL, LANGUAGE_NAME } from '../lib/labels'
 import { cx } from '../lib/ui'
-import { ChannelIcon, FlagChips, PriorityBadge } from './ContactCard'
+import { PriorityBadge, StatusPill } from './ContactCard'
 import { Button, Chip, ErrorNote, Spinner } from './ui'
-
-function hoursSince(iso: string | null, nowIso: string): number | null {
-  if (!iso) return null
-  return Math.floor((new Date(nowIso).getTime() - new Date(iso).getTime()) / 3_600_000)
-}
-
-function Row({ c, now, onOpen }: { c: ContactSummary; now: string; onOpen: (id: number) => void }) {
-  const waited = hoursSince(c.last_inbound_at, now)
-  return (
-    <li>
-      <button
-        onClick={() => onOpen(c.id)}
-        className="flex w-full items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 text-left shadow-xs hover:shadow-md"
-      >
-        <PriorityBadge priority={c.priority} />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-            <span className="font-semibold text-slate-900">{displayName(c)}</span>
-            <span className="inline-flex items-center gap-1 text-xs text-slate-500">
-              <ChannelIcon channel={c.channel} /> {c.channel ? CHANNEL[c.channel]?.short : ''}
-            </span>
-            <Chip>{c.status}</Chip>
-          </div>
-          <p className="mt-0.5 text-sm text-slate-600">{c.summary}</p>
-          <p className="mt-1 text-xs text-slate-500">
-            {c.follow_up_by && <>Follow up by {formatWhen(c.follow_up_by)} · </>}
-            {waited !== null && <>waiting {waited} h for our reply · </>}
-            {c.priority_reason}
-          </p>
-          <div className="mt-1.5">
-            <FlagChips contact={c} withLabels />
-          </div>
-        </div>
-      </button>
-    </li>
-  )
-}
 
 function Tile({ label, value, tone }: { label: string; value: number | string; tone?: 'red' }) {
   return (
@@ -97,10 +60,10 @@ function WeeklySummary({ onOpen }: { onOpen: (id: number) => void }) {
   const st = report.stats
   const s = report.summary
   return (
-    <section aria-label="Weekly summary" className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+    <section aria-label="Weekly summary" className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Weekly summary</h2>
+          <h2 className="text-lg font-semibold text-slate-900">This week</h2>
           <p className="text-xs text-slate-500">
             Week from {st.week_starts.replace(', 00:00', '')} to {st.as_of} · numbers computed by code, words written by AI
           </p>
@@ -132,6 +95,11 @@ function WeeklySummary({ onOpen }: { onOpen: (id: number) => void }) {
 
       {s && !busy && (
         <div className="space-y-4 rounded-xl bg-white p-4 ring-1 ring-slate-200">
+          {s.unverified_numbers.length === 0 && (
+            <p className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+              <ShieldCheck className="size-3.5" aria-hidden /> Every number below was checked against the data
+            </p>
+          )}
           {s.unverified_numbers.length > 0 && (
             <div className="flex gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200">
               <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
@@ -172,58 +140,46 @@ function WeeklySummary({ onOpen }: { onOpen: (id: number) => void }) {
         <Breakdown title="Contacts by language" data={st.contacts_by_language} label={(k) => LANGUAGE_NAME[k] ?? k} />
         <Breakdown title="Pipeline by interest" data={st.pipeline_by_interest} label={(k) => INTEREST_LABEL[k] ?? k} />
       </div>
+
+      {st.corporate.list.length > 0 && (
+        <div className="rounded-xl bg-white ring-1 ring-slate-200">
+          <h3 className="px-4 pt-3 font-semibold text-slate-900">
+            Corporate leads <span className="font-normal text-slate-500">· {st.corporate.total_people_to_train} people to train</span>
+          </h3>
+          <table className="mt-2 w-full text-left text-sm">
+            <thead className="text-xs text-slate-500">
+              <tr>
+                <th className="px-4 py-1.5 font-medium">Company</th>
+                <th className="px-4 py-1.5 font-medium">Contact</th>
+                <th className="px-4 py-1.5 text-right font-medium">Team size</th>
+                <th className="px-4 py-1.5 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {st.corporate.list.map((c) => (
+                <tr key={c.contact_id} className="border-t border-slate-100">
+                  <td className="px-4 py-2 text-slate-800">{c.company ?? '—'}</td>
+                  <td className="px-4 py-2">
+                    <button onClick={() => onOpen(c.contact_id)} className="font-medium text-indigo-700 hover:underline">
+                      {c.name ?? 'Unknown'}
+                    </button>
+                  </td>
+                  <td className="px-4 py-2 text-right tabular-nums">{c.team_size ?? '—'}</td>
+                  <td className="px-4 py-2"><StatusPill status={c.status} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   )
 }
 
-export function FollowUps({ refreshKey, onOpen }: { refreshKey: number; onOpen: (id: number) => void }) {
-  const [data, setData] = useState<Followups | null>(null)
-  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    reports.followups().then(setData, (e: Error) => setError(e.message))
-  }, [refreshKey])
-
+export function Reports({ refreshKey, onOpen }: { refreshKey: number; onOpen: (id: number) => void }) {
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <div className="space-y-6">
-        {error && <ErrorNote message={error} />}
-        {!data && !error && <Spinner label="Loading follow-ups…" />}
-        {data && (
-          <>
-            <section aria-label="Overdue">
-              <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold text-slate-900">
-                <Clock className="size-5 text-red-600" /> Overdue <span className="font-normal text-slate-500">{data.overdue.length}</span>
-              </h2>
-              <p className="mb-3 text-sm text-slate-500">No reply yet, and their follow-up time has passed or they have waited over 48 hours.</p>
-              {data.overdue.length ? (
-                <ul className="space-y-2">
-                  {data.overdue.map((c) => (
-                    <Row key={c.id} c={c} now={data.now} onOpen={onOpen} />
-                  ))}
-                </ul>
-              ) : (
-                <p className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">Nobody is overdue. Nice work.</p>
-              )}
-            </section>
-            <section aria-label="Due today">
-              <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold text-slate-900">
-                <CalendarClock className="size-5 text-amber-600" /> Due later today{' '}
-                <span className="font-normal text-slate-500">{data.due_today.length}</span>
-              </h2>
-              {data.due_today.length ? (
-                <ul className="space-y-2">
-                  {data.due_today.map((c) => (
-                    <Row key={c.id} c={c} now={data.now} onOpen={onOpen} />
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-slate-500">No follow-ups due later today.</p>
-              )}
-            </section>
-          </>
-        )}
-      </div>
+    <div className="mx-auto max-w-[1100px]">
       <WeeklySummary key={refreshKey} onOpen={onOpen} />
     </div>
   )

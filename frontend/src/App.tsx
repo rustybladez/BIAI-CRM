@@ -1,31 +1,41 @@
+import { CheckCircle2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api, type ContactSummary, type Meta } from './api'
-import { Board, FilterBar, NotALeadTray, SortControl } from './components/Board'
-import { ContactDrawer } from './components/ContactDrawer'
-import { FollowUps } from './components/FollowUps'
-import { Header, type View } from './components/Header'
+import { ContactPanel } from './components/ContactPanel'
 import { IntakeModal } from './components/IntakeModal'
+import { Pipeline } from './components/Pipeline'
+import { Reports } from './components/Reports'
+import { Sidebar, TopBar } from './components/Shell'
+import { Today, type GoTo } from './components/Today'
 import { ErrorNote, Spinner } from './components/ui'
-import { NO_FILTERS, applyFilters, loadSortMode, saveSortMode, sortContacts, type Filters, type SortMode } from './lib/filters'
+import { NO_FILTERS, loadSortMode, saveSortMode, sortContacts, type Filters, type SortMode } from './lib/filters'
+import { parseHash, toHash, type Route, type View } from './lib/nav'
+
+const TITLES: Record<View, string> = { today: 'Today', pipeline: 'Pipeline', reports: 'Reports' }
 
 export default function App() {
   const [meta, setMeta] = useState<Meta | null>(null)
   const [contacts, setContacts] = useState<ContactSummary[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [route, setRouteState] = useState<Route>(() => parseHash(window.location.hash))
+  const [queue, setQueue] = useState<number[]>([])
   const [filters, setFilters] = useState<Filters>(NO_FILTERS)
-  const [openId, setOpenId] = useState<number | null>(null)
-  const [pasting, setPasting] = useState(false)
-  const [view, setViewState] = useState<View>(() => (window.location.hash === '#followups' ? 'followups' : 'board'))
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [tab, setTab] = useState<'pipeline' | 'not_a_lead'>('pipeline')
   const [sortMode, setSortModeState] = useState<SortMode>(loadSortMode)
-  const setSortMode = (m: SortMode) => {
-    setSortModeState(m)
-    saveSortMode(m)
-  }
-  const setView = (v: View) => {
-    setViewState(v)
-    window.history.replaceState(null, '', v === 'board' ? '#' : '#followups')
-  }
+  const [pasting, setPasting] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
+  const [toast, setToast] = useState<string | null>(null)
+
+  const setRoute = useCallback((r: Route) => {
+    setRouteState(r)
+    window.history.replaceState(null, '', toHash(r))
+  }, [])
+
+  useEffect(() => {
+    const onHash = () => setRouteState(parseHash(window.location.hash))
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
 
   const load = useCallback(async () => {
     try {
@@ -54,16 +64,48 @@ export default function App() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 3500)
+    return () => clearTimeout(t)
+  }, [toast])
+
+  // n = new enquiry (when not typing)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const typing = e.target instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)
+      if (e.key === 'n' && !typing && !e.metaKey && !e.ctrlKey && route.contactId === null) {
+        e.preventDefault()
+        setPasting(true)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [route.contactId])
+
   const pipeline = useMemo(() => (contacts ?? []).filter((c) => c.status !== null), [contacts])
-  const notALead = useMemo(() => (contacts ?? []).filter((c) => c.status === null), [contacts])
-  const visible = useMemo(() => sortContacts(applyFilters(pipeline, filters), sortMode), [pipeline, filters, sortMode])
-  const closeDrawer = useCallback(() => setOpenId(null), [])
+  const defaultQueue = useMemo(() => sortContacts(pipeline, sortMode).map((c) => c.id), [pipeline, sortMode])
+
+  const openContact = (id: number, q?: number[]) => {
+    setQueue(q && q.includes(id) ? q : defaultQueue.includes(id) ? defaultQueue : [id])
+    setRoute({ ...route, contactId: id })
+  }
+  const closeContact = useCallback(() => setRoute({ ...route, contactId: null }), [route, setRoute])
+  const navigate = useCallback((id: number) => setRoute({ ...route, contactId: id }), [route, setRoute])
+
+  const go = (to: GoTo) => {
+    if (to === 'reports') return setRoute({ view: 'reports', contactId: null })
+    setTab(to.tab ?? 'pipeline')
+    setFilters(to.filters ?? NO_FILTERS)
+    setRoute({ view: 'pipeline', contactId: null })
+  }
 
   const move = async (id: number, status: string) => {
-    // Optimistic: move the card now, then reload (order / overdue may change).
     setContacts((cs) => cs && cs.map((c) => (c.id === id ? { ...c, status } : c)))
     try {
       await api.updateContact(id, { status })
+      const name = contacts?.find((c) => c.id === id)?.name ?? 'Contact'
+      setToast(`${name} moved to ${status}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not move the card')
     }
@@ -72,26 +114,20 @@ export default function App() {
 
   if (!meta || !contacts) {
     return (
-      <div className="grid min-h-screen place-items-center">
+      <div className="grid h-screen place-items-center">
         {error ? <ErrorNote message={error} onRetry={load} /> : <Spinner label="Loading enquiries…" />}
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen">
-      <Header
-        view={view}
-        onView={setView}
+    <div className="flex h-screen overflow-hidden bg-slate-50">
+      <Sidebar
+        view={route.view}
+        onView={(v) => setRoute({ view: v, contactId: null })}
+        counts={{ overdue: pipeline.filter((c) => c.overdue).length, pipeline: pipeline.length }}
+        onNew={() => setPasting(true)}
         demoNow={meta.demo_now}
-        urgent={pipeline.filter((c) => c.priority === 'urgent').length}
-        overdue={pipeline.filter((c) => c.overdue).length}
-        overdueOnly={filters.overdueOnly}
-        onToggleOverdue={() => {
-          setView('board')
-          setFilters((f) => ({ ...f, overdueOnly: !f.overdueOnly }))
-        }}
-        onPaste={() => setPasting(true)}
         onSetClock={async (v) => {
           try {
             await api.setClock(v)
@@ -101,35 +137,55 @@ export default function App() {
           await load()
         }}
         onReset={async () => {
-          setOpenId(null)
+          setRoute({ ...route, contactId: null })
           await api.reset()
           setFilters(NO_FILTERS)
           await load()
+          setToast('Demo data reset: 20 sample enquiries reloaded')
         }}
       />
-
-      <main className="mx-auto max-w-[1600px] space-y-4 px-4 py-4 sm:px-6">
-        {error && <ErrorNote message={error} onRetry={load} />}
-        {view === 'followups' ? (
-          <FollowUps refreshKey={refreshKey} onOpen={setOpenId} />
-        ) : (
-          <>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <FilterBar meta={meta} filters={filters} onChange={setFilters} />
-              <p className="text-sm text-slate-500">
-                {pipeline.length} in the pipeline · drag a card to change its status · click to open
-              </p>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <TopBar title={TITLES[route.view]} onOpen={(id) => openContact(id)} />
+        <main className={route.view === 'pipeline' ? 'min-h-0 flex-1 overflow-hidden p-5' : 'min-h-0 flex-1 overflow-y-auto p-6'}>
+          {error && (
+            <div className="mb-3">
+              <ErrorNote message={error} onRetry={load} />
             </div>
-            <SortControl mode={sortMode} onChange={setSortMode} />
-            <div className="overflow-x-auto pb-2">
-              <Board meta={meta} contacts={visible} onOpen={setOpenId} onMove={move} />
-            </div>
-            <NotALeadTray contacts={notALead} onOpen={setOpenId} />
-          </>
-        )}
-      </main>
+          )}
+          {route.view === 'today' && <Today meta={meta} contacts={contacts} refreshKey={refreshKey} onOpen={openContact} onGo={go} />}
+          {route.view === 'pipeline' && (
+            <Pipeline
+              meta={meta}
+              contacts={contacts}
+              filters={filters}
+              onFilters={setFilters}
+              sortMode={sortMode}
+              onSortMode={(m) => {
+                setSortModeState(m)
+                saveSortMode(m)
+              }}
+              tab={tab}
+              onTab={setTab}
+              onOpen={openContact}
+              onMove={move}
+            />
+          )}
+          {route.view === 'reports' && <Reports refreshKey={refreshKey} onOpen={(id) => openContact(id)} />}
+        </main>
+      </div>
 
-      {openId !== null && <ContactDrawer key={openId} id={openId} meta={meta} onClose={closeDrawer} onChanged={load} />}
+      {route.contactId !== null && (
+        <ContactPanel
+          key={route.contactId}
+          id={route.contactId}
+          meta={meta}
+          queue={queue.length ? queue : defaultQueue}
+          onNavigate={navigate}
+          onClose={closeContact}
+          onChanged={load}
+          onToast={setToast}
+        />
+      )}
       {pasting && (
         <IntakeModal
           meta={meta}
@@ -137,9 +193,15 @@ export default function App() {
           onSaved={async (id) => {
             setPasting(false)
             await load()
-            setOpenId(id)
+            openContact(id)
+            setToast('Enquiry saved')
           }}
         />
+      )}
+      {toast && (
+        <div role="status" className="fixed bottom-5 left-1/2 z-[60] flex -translate-x-1/2 items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm text-white shadow-xl">
+          <CheckCircle2 className="size-4 text-emerald-400" aria-hidden /> {toast}
+        </div>
       )}
     </div>
   )

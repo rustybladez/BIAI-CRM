@@ -65,7 +65,7 @@ export function ReplyPanel({ contact, onSent }: { contact: ContactDetail; onSent
 
   const isNone = draft?.format === 'none'
   return (
-    <section aria-label="Suggested reply" className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4">
+    <section aria-label="Suggested reply" className="rounded-2xl border border-indigo-200 bg-white p-3 shadow-[0_-4px_24px_rgba(79,70,229,0.08)]">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-semibold text-slate-900">
           Suggested reply
@@ -91,7 +91,7 @@ export function ReplyPanel({ contact, onSent }: { contact: ContactDetail; onSent
         )}
       </div>
 
-      <div className="mt-3 space-y-3">
+      <div className="mt-2 space-y-2">
         {loading && <Spinner label={`Writing a reply in ${LANGUAGE_NAME[loading]}… (AI, a few seconds)`} />}
         {error && <ErrorNote message={error} onRetry={() => load(draft?.language)} />}
 
@@ -117,10 +117,10 @@ export function ReplyPanel({ contact, onSent }: { contact: ContactDetail; onSent
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              rows={Math.min(14, Math.max(5, Math.ceil(body.length / 70) + body.split('\n').length))}
+              rows={Math.min(6, Math.max(3, Math.ceil(body.length / 95) + body.split('\n').length - 1))}
               aria-label="Reply text"
               lang={draft.language === 'bangla' ? 'bn' : 'en'}
-              className="w-full rounded-lg border border-slate-300 bg-white p-3 text-[15px] leading-relaxed text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-[15px] leading-relaxed text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
             />
             {draft.needs_confirmation.length > 0 && (
               <div className="rounded-lg bg-white p-3 text-sm ring-1 ring-slate-200">
