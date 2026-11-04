@@ -41,6 +41,24 @@ require('fs').mkdirSync(S, { recursive: true });
     await tray.getByText('Arif Hossain', { exact: true }).waitFor();
     console.log('     tray:', (await tray.innerText()).replace(/\s+/g, ' ').slice(0, 160));
   });
+  await step('1c follow-ups: 6 overdue, seeded weekly summary (no AI), chase first opens contact', async () => {
+    await p.getByRole('button', { name: 'Follow-ups & summary' }).click();
+    const overdue = p.getByRole('region', { name: 'Overdue' });
+    await overdue.getByRole('button').first().waitFor();
+    const n = await overdue.getByRole('listitem').count();
+    if (n !== 6) throw new Error('overdue rows ' + n);
+    const chase = await p.getByTestId('chase-first').innerText();
+    for (const name of ['Habibur Rahman', 'Rafi Ahmed']) if (!chase.includes(name)) throw new Error('chase first missing ' + name);
+    console.log('     overview:', (await p.getByTestId('summary-overview').innerText()).slice(0, 120));
+    await p.screenshot({ path: S + '1c-followups.png', fullPage: true });
+    const csv = await p.evaluate(async () => { const r = await fetch('/api/export.csv'); return [r.status, (await r.text()).split('\n').length]; });
+    if (csv[0] !== 200 || csv[1] < 20) throw new Error('csv ' + csv);
+    await p.getByTestId('chase-first').getByRole('button', { name: 'Habibur Rahman' }).click();
+    await drawer().getByText('Call script').waitFor();
+    await close();
+    await p.getByRole('button', { name: 'Pipeline' }).click();
+    await p.getByTestId('column-New').waitFor();
+  });
   await step('2 open Habibur: urgent, call script', async () => {
     await card('Paid', 'Habibur Rahman').click();
     await drawer().getByText('Call script').waitFor();
@@ -129,6 +147,14 @@ require('fs').mkdirSync(S, { recursive: true });
     await p.getByRole('button', { name: 'Set', exact: true }).click();
     await p.getByText('Mon 26 Oct').waitFor();
     console.log('     overdue before/after:', before, '/', await p.getByTestId('overdue-count').innerText());
+  });
+  await step('9b data changed -> generate weekly summary live', async () => {
+    await p.getByRole('button', { name: 'Follow-ups & summary' }).click();
+    await p.getByRole('button', { name: 'Generate weekly summary' }).click();
+    await p.getByTestId('summary-overview').waitFor({ timeout: 90000 });
+    if (await p.getByText('Check: these numbers are not in the computed figures').count()) throw new Error('unverified numbers in summary');
+    console.log('     live overview:', (await p.getByTestId('summary-overview').innerText()).slice(0, 120));
+    await p.getByRole('button', { name: 'Pipeline' }).click();
   });
   await step('10 reset demo', async () => {
     await p.getByRole('button', { name: 'Reset demo' }).click();

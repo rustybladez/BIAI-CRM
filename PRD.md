@@ -393,9 +393,9 @@ Work in order. At the end of each milestone: tick the boxes, run the checks list
 - **Done when:** the full demo script (§12) runs in the browser on the local build with no console errors.
 
 ### M7: Extras (2h)
-- [ ] S4 Follow-ups (overdue + due today)
-- [ ] Weekly summary (§7.5)
-- [ ] CSV export (only if ahead of schedule)
+- [x] S4 Follow-ups (overdue + due today)
+- [x] Weekly summary (§7.5)
+- [x] CSV export (only if ahead of schedule)
 - **Done when:** summary names Habibur (#16) and Rafi among "chase first", and every number in it matches the code-computed figures.
 
 ### M8: Polish + Bangla (2h)

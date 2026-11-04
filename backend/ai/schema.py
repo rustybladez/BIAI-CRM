@@ -139,3 +139,17 @@ class SuggestedReply(BaseModel):
         default_factory=list,
         description="Questions the customer asked that the FAQ does not answer (short English).",
     )
+
+
+# ---- Weekly summary (PRD §7.5). Numbers come from code; the AI writes the words. ----
+
+
+class ChaseItem(BaseModel):
+    contact_id: int = Field(description="contact_id from chase_candidates_ranked.")
+    reason: str = Field(description="One short line: why chase them first.")
+
+
+class WeeklySummary(BaseModel):
+    overview: str = Field(description="3-5 sentences in English, using only the numbers provided.")
+    chase_first: list[ChaseItem] = Field(description="Up to 5 contacts, most important first.")
+    observation: str = Field(description="One useful pattern in the data, one or two sentences.")

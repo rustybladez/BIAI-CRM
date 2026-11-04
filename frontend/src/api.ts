@@ -187,3 +187,44 @@ export const api = {
   setClock: (demo_now: string) => request<{ demo_now: string }>('PUT', '/demo/clock', { demo_now }),
   reset: () => request<{ enquiries: number }>('POST', '/demo/reset'),
 }
+
+export type Followups = { now: string; overdue: ContactSummary[]; due_today: ContactSummary[] }
+
+export type WeeklyStats = {
+  as_of: string
+  week_starts: string
+  contacts_total: number
+  messages_total: number
+  this_week: { messages_received: number; new_contacts: number; replies_sent: number }
+  pipeline_total: number
+  pipeline_by_status: Record<string, number>
+  waiting_for_our_reply: number
+  overdue_count: number
+  urgent_count: number
+  not_a_lead: Record<string, number>
+  messages_by_channel: Record<string, number>
+  pipeline_by_interest: Record<string, number>
+  contacts_by_language: Record<string, number>
+  missing_phone: number
+  corporate: { leads: number; total_people_to_train: number }
+}
+
+export type WeeklyReport = {
+  stats: WeeklyStats
+  summary: {
+    overview: string
+    observation: string
+    chase_first: { contact_id: number; name: string; priority: string; overdue: boolean; reason: string }[]
+    model_used: string | null
+    latency_ms: number | null
+    generated_at: string
+    unverified_numbers: string[]
+  } | null
+  error: string | null
+}
+
+export const reports = {
+  followups: () => request<Followups>('GET', '/followups'),
+  weekly: () => request<WeeklyReport>('GET', '/summary/weekly'),
+  generateWeekly: () => request<WeeklyReport>('POST', '/summary/weekly'),
+}

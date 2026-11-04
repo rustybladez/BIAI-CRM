@@ -1,0 +1,33 @@
+{
+  "fingerprint": "74b285252f443ec7",
+  "generated_at": "2026-11-04 11:56",
+  "model_used": "deepseek:deepseek-flash",
+  "latency_ms": 11834,
+  "summary": {
+    "overview": "20 messages came in this week from 19 new contacts, and no replies have been sent yet; 17 people are waiting for our reply. The pipeline has 17 contacts: 15 New and 2 Paid, with 6 overdue and 2 urgent. Attention is needed on Habibur Rahman's refund request and public-complaint threat, and on Farzana Rahman's unconfirmed bKash payment. Corporate interest is from 3 leads covering 175 people to train, including a bank team of 120 and a Gazipur textile team of 40.",
+    "chase_first": [
+      {
+        "contact_id": 15,
+        "reason": "Call today: refund request with a same-day deadline and a threat to post publicly."
+      },
+      {
+        "contact_id": 1,
+        "reason": "Reply on WhatsApp today with the bootcamp price; he has asked again with no reply."
+      },
+      {
+        "contact_id": 3,
+        "reason": "Call this week: corporate MD wants a callback for a 40-person textile team."
+      },
+      {
+        "contact_id": 7,
+        "reason": "Confirm her bKash payment today: paid on the 25th and has no confirmation."
+      },
+      {
+        "contact_id": 10,
+        "reason": "Send a quote today: bank HR contact wants training for 120 employees, online or onsite."
+      }
+    ],
+    "observation": "WhatsApp is the busiest channel with 8 messages, English is the largest language group at 9 contacts, and 5 contacts are missing a phone number."
+  },
+  "unverified_numbers": []
+}

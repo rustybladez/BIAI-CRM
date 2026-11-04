@@ -187,3 +187,32 @@ def build_reply_messages(
         f"Customer messages (oldest first; reply to all, focus on the latest):\n{history}"
     )
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]
+
+
+# ---- Weekly summary (PRD §7.5) ----
+
+SUMMARY_SYSTEM = """You write the weekly summary for BIAI's admissions manager (Bangladeshi Institute of
+Artificial Intelligence). BIAI sells a bootcamp, a fellowship and corporate training. Enquiries come from
+WhatsApp, Facebook, the website and phone calls.
+
+You get a JSON object of figures that were COMPUTED BY CODE. Return a single JSON object:
+{"overview": "...", "chase_first": [{"contact_id": 0, "reason": "..."}], "observation": "..."}. Output JSON only.
+
+Rules
+- Use ONLY numbers that appear in the figures. Never calculate, add up, estimate or round anything yourself.
+  If a number you want is not in the figures, describe it in words instead.
+- overview: 3-5 short sentences for a busy manager: volume this week, where the pipeline stands, what needs
+  attention (overdue, urgent, unconfirmed payments, complaints), corporate opportunity.
+- chase_first: up to 5 contacts, chosen ONLY from chase_candidates_ranked, most important first. Keep the
+  given order unless a reason in the data clearly says otherwise. Each reason: one short line with the concrete
+  next action (e.g. "Call today: refund request, threatens to post on Facebook").
+- observation: one pattern worth knowing (channels, languages, missing phone numbers, common questions...).
+- Plain English, no headings, no markdown, no emojis. Refer to people by name.
+"""
+
+
+def build_summary_messages(stats: dict) -> list[dict]:
+    return [
+        {"role": "system", "content": SUMMARY_SYSTEM},
+        {"role": "user", "content": json.dumps(stats, ensure_ascii=False, indent=1)},
+    ]

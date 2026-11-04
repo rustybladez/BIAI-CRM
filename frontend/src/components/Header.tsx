@@ -4,7 +4,11 @@ import { demoNowIso, formatWhen } from '../lib/labels'
 import { Button } from './ui'
 import { cx, inputClass } from '../lib/ui'
 
+export type View = 'board' | 'followups'
+
 export function Header({
+  view,
+  onView,
   demoNow,
   urgent,
   overdue,
@@ -14,6 +18,8 @@ export function Header({
   onSetClock,
   onReset,
 }: {
+  view: View
+  onView: (v: View) => void
   demoNow: string
   urgent: number
   overdue: number
@@ -32,8 +38,29 @@ export function Header({
       <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
         <div className="flex items-baseline gap-2">
           <span className="text-lg font-bold tracking-tight text-slate-900">BIAI CRM</span>
-          <span className="hidden text-sm text-slate-500 md:inline">Enquiries from WhatsApp, Facebook, web and phone</span>
+          <span className="hidden text-sm text-slate-500 2xl:inline">Enquiries from WhatsApp, Facebook, web and phone</span>
         </div>
+
+        <nav className="flex rounded-lg bg-slate-100 p-0.5" aria-label="Views">
+          {(
+            [
+              ['board', 'Pipeline'],
+              ['followups', 'Follow-ups & summary'],
+            ] as const
+          ).map(([v, label]) => (
+            <button
+              key={v}
+              onClick={() => onView(v)}
+              aria-current={view === v ? 'page' : undefined}
+              className={cx(
+                'rounded-md px-3 py-1 text-sm font-medium transition',
+                view === v ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900',
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
 
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-red-600 px-2.5 py-0.5 text-sm font-semibold text-white" data-testid="urgent-count">

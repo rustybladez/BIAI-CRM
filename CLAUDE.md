@@ -67,6 +67,8 @@ eval/run_eval.py     scores the AI against gold.json, prints a table
 - Eval: `uv run python eval/run_eval.py`
 - Replies: `uv run python eval/run_reply_checks.py` (checks saved drafts); add `--generate` to rewrite
   `backend/seed/replies.json` with the AI (run it after changing faq.yaml or the reply prompt)
+- Weekly summary: `uv run python eval/run_summary_check.py` (checks the saved one); `--generate` rewrites
+  `backend/seed/summary.json` (run it after changing the seed data, the stats or the summary prompt)
 - Deploy: `npm run build` (in frontend/), then `uv run fastapi deploy` → https://biai-crm.fastapicloud.dev
   (first time on a new machine: `uv run fastapi login`, then `uv run fastapi cloud link`). The filesystem is wiped on
   every redeploy, so the DB must reseed on boot.

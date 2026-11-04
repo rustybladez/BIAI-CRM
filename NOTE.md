@@ -41,3 +41,16 @@
   Dates written in words ("March") are not checked.
 - All 19 seeded contacts ship with drafts in all three languages (`seed/replies.json`), so the demo and the
   language switch need no live AI call.
+
+**M7, follow-ups + weekly summary (2026-11-04):**
+- Code computes every figure (this week's volume, pipeline by status, overdue / urgent counts, corporate
+  pipeline and people to train, channel / language / interest breakdowns) and a ranked "chase first"
+  shortlist (most urgent, then overdue, then longest wait). The AI only writes the overview, picks up to 5
+  people from that shortlist with a one-line next action, and adds one observation.
+- Code checks the AI's text: every number must appear in the computed figures (one rewrite if not),
+  chase-first contacts must come from the shortlist. Seeded summary: all checks pass, Habibur and Rafi first.
+- First draft wrote "several contacts are overdue" because the overdue count was not in the figures: the
+  rule worked; we added the count. The live run also exposed a counting bug when the demo clock is moved
+  back (new contacts were not capped at "now"); fixed with a test.
+- A pre-generated summary for the seeded data ships in `seed/summary.json` (reused while the figures are
+  unchanged), so the demo needs no live AI call. Any change to the data hides it until "Generate" is clicked.

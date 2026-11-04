@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api, type ContactSummary, type Meta } from './api'
 import { Board, FilterBar, NotALeadTray } from './components/Board'
 import { ContactDrawer } from './components/ContactDrawer'
-import { Header } from './components/Header'
+import { FollowUps } from './components/FollowUps'
+import { Header, type View } from './components/Header'
 import { IntakeModal } from './components/IntakeModal'
 import { ErrorNote, Spinner } from './components/ui'
 import { NO_FILTERS, applyFilters, type Filters } from './lib/filters'
@@ -14,6 +15,12 @@ export default function App() {
   const [filters, setFilters] = useState<Filters>(NO_FILTERS)
   const [openId, setOpenId] = useState<number | null>(null)
   const [pasting, setPasting] = useState(false)
+  const [view, setViewState] = useState<View>(() => (window.location.hash === '#followups' ? 'followups' : 'board'))
+  const [refreshKey, setRefreshKey] = useState(0)
+  const setView = (v: View) => {
+    setViewState(v)
+    window.history.replaceState(null, '', v === 'board' ? '#' : '#followups')
+  }
 
   const load = useCallback(async () => {
     try {
@@ -21,6 +28,7 @@ export default function App() {
       setMeta(m)
       setContacts(c)
       setError(null)
+      setRefreshKey((k) => k + 1)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load the CRM')
     }
@@ -68,11 +76,16 @@ export default function App() {
   return (
     <div className="min-h-screen">
       <Header
+        view={view}
+        onView={setView}
         demoNow={meta.demo_now}
         urgent={pipeline.filter((c) => c.priority === 'urgent').length}
         overdue={pipeline.filter((c) => c.overdue).length}
         overdueOnly={filters.overdueOnly}
-        onToggleOverdue={() => setFilters((f) => ({ ...f, overdueOnly: !f.overdueOnly }))}
+        onToggleOverdue={() => {
+          setView('board')
+          setFilters((f) => ({ ...f, overdueOnly: !f.overdueOnly }))
+        }}
         onPaste={() => setPasting(true)}
         onSetClock={async (v) => {
           try {
@@ -92,16 +105,22 @@ export default function App() {
 
       <main className="mx-auto max-w-[1600px] space-y-4 px-4 py-4 sm:px-6">
         {error && <ErrorNote message={error} onRetry={load} />}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <FilterBar meta={meta} filters={filters} onChange={setFilters} />
-          <p className="text-sm text-slate-500">
-            {pipeline.length} in the pipeline · drag a card to change its status · click to open
-          </p>
-        </div>
-        <div className="overflow-x-auto pb-2">
-          <Board meta={meta} contacts={visible} onOpen={setOpenId} onMove={move} />
-        </div>
-        <NotALeadTray contacts={notALead} onOpen={setOpenId} />
+        {view === 'followups' ? (
+          <FollowUps refreshKey={refreshKey} onOpen={setOpenId} />
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <FilterBar meta={meta} filters={filters} onChange={setFilters} />
+              <p className="text-sm text-slate-500">
+                {pipeline.length} in the pipeline · drag a card to change its status · click to open
+              </p>
+            </div>
+            <div className="overflow-x-auto pb-2">
+              <Board meta={meta} contacts={visible} onOpen={setOpenId} onMove={move} />
+            </div>
+            <NotALeadTray contacts={notALead} onOpen={setOpenId} />
+          </>
+        )}
       </main>
 
       {openId !== null && <ContactDrawer key={openId} id={openId} meta={meta} onClose={closeDrawer} onChanged={load} />}
