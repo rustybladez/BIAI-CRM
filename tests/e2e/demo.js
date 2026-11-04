@@ -35,6 +35,22 @@ require('fs').mkdirSync(S, { recursive: true });
     console.log('     header:', await p.getByTestId('urgent-count').innerText(), '|', await p.getByTestId('overdue-count').innerText(), '|', await p.getByTestId('demo-now').innerText());
     await p.screenshot({ path: S + '1-board.png' });
   });
+  await step('1a sort switch: priority first (default) vs overdue first, remembered on reload', async () => {
+    const firstNew = async () => (await col('New').locator('[data-testid^=card-]').first().innerText()).split('\n');
+    const radio = n => p.getByRole('radio', { name: n });
+    if ((await radio('Priority first').getAttribute('aria-checked')) !== 'true') throw new Error('default not priority');
+    const a = await firstNew();
+    if (!a.includes('Rafi Ahmed')) throw new Error('priority mode top: ' + a.join(' | '));
+    await p.screenshot({ path: S + '1a-sort-priority.png' });
+    await radio('Overdue first').click();
+    const b = await firstNew();
+    if (!b.includes('Mahmud Hasan')) throw new Error('overdue mode top: ' + b.join(' | '));
+    console.log('     help:', await p.getByTestId('sort-help').innerText());
+    await p.screenshot({ path: S + '1a-sort-overdue.png' });
+    await p.reload(); await p.getByText('in the pipeline').waitFor();
+    if ((await radio('Overdue first').getAttribute('aria-checked')) !== 'true') throw new Error('not remembered');
+    await radio('Priority first').click();
+  });
   await step('1b not-a-lead tray opens', async () => {
     await p.getByRole('button', { name: /Not a lead/ }).click();
     const tray = p.getByRole('region', { name: 'Not a lead' });

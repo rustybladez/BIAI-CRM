@@ -1,9 +1,9 @@
-import { ChevronDown, ChevronRight, Inbox } from 'lucide-react'
+import { ArrowDownWideNarrow, ChevronDown, ChevronRight, Inbox } from 'lucide-react'
 import { useState } from 'react'
 import type { ContactSummary, Meta } from '../api'
 import { CHANNEL, INTEREST_LABEL, TYPE_LABEL, displayName } from '../lib/labels'
 import { ChannelIcon, ContactCard } from './ContactCard'
-import { NO_FILTERS, type Filters } from '../lib/filters'
+import { NO_FILTERS, SORT_HELP, type Filters, type SortMode } from '../lib/filters'
 import { cx, inputClass } from '../lib/ui'
 
 export function FilterBar({ meta, filters, onChange }: { meta: Meta; filters: Filters; onChange: (f: Filters) => void }) {
@@ -144,5 +144,38 @@ export function NotALeadTray({ contacts, onOpen }: { contacts: ContactSummary[];
         </ul>
       )}
     </section>
+  )
+}
+
+export function SortControl({ mode, onChange }: { mode: SortMode; onChange: (m: SortMode) => void }) {
+  const options: { value: SortMode; label: string }[] = [
+    { value: 'priority', label: 'Priority first' },
+    { value: 'overdue', label: 'Overdue first' },
+  ]
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="flex items-center gap-1 text-sm font-medium text-slate-700">
+        <ArrowDownWideNarrow className="size-4" aria-hidden /> Sort cards:
+      </span>
+      <div className="inline-flex rounded-lg bg-white p-0.5 ring-1 ring-slate-300" role="radiogroup" aria-label="Sort cards">
+        {options.map((o) => (
+          <button
+            key={o.value}
+            role="radio"
+            aria-checked={mode === o.value}
+            onClick={() => onChange(o.value)}
+            className={cx(
+              'rounded-md px-2.5 py-1 text-sm font-medium transition',
+              mode === o.value ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-100',
+            )}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+      <span className="text-xs text-slate-500" data-testid="sort-help">
+        {SORT_HELP[mode]}
+      </span>
+    </div>
   )
 }

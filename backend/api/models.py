@@ -4,7 +4,7 @@ Datetimes go out as Asia/Dhaka time with offset, e.g. 2026-10-27T17:00:00+06:00.
 """
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -171,10 +171,18 @@ def draft_out(d: ReplyDraft, c: Contact) -> ReplyDraftOut:
     )
 
 
-def sort_key(s: ContactSummary) -> tuple:
-    """Overdue first, then most urgent, then most recent message."""
-    return (
-        not s.overdue,
-        -PRIORITY_RANK[Priority(s.priority)],
-        -(s.last_inbound_at.timestamp() if s.last_inbound_at else 0),
-    )
+SortMode = Literal["priority", "overdue"]
+
+
+def sort_key(s: ContactSummary, mode: SortMode = "priority") -> tuple:
+    """How cards are ordered. Ties go to whoever has waited longest (oldest last message first).
+
+    priority (default): most urgent first, then overdue before not overdue.
+        An urgent contact beats a low-priority overdue one.
+    overdue: all overdue contacts first, then by priority within each group.
+    """
+    rank = -PRIORITY_RANK[Priority(s.priority)]
+    waited = s.last_inbound_at.timestamp() if s.last_inbound_at else float("inf")
+    if mode == "overdue":
+        return (not s.overdue, rank, waited)
+    return (rank, not s.overdue, waited)

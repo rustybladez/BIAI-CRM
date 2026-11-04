@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api, type ContactSummary, type Meta } from './api'
-import { Board, FilterBar, NotALeadTray } from './components/Board'
+import { Board, FilterBar, NotALeadTray, SortControl } from './components/Board'
 import { ContactDrawer } from './components/ContactDrawer'
 import { FollowUps } from './components/FollowUps'
 import { Header, type View } from './components/Header'
 import { IntakeModal } from './components/IntakeModal'
 import { ErrorNote, Spinner } from './components/ui'
-import { NO_FILTERS, applyFilters, type Filters } from './lib/filters'
+import { NO_FILTERS, applyFilters, loadSortMode, saveSortMode, sortContacts, type Filters, type SortMode } from './lib/filters'
 
 export default function App() {
   const [meta, setMeta] = useState<Meta | null>(null)
@@ -17,6 +17,11 @@ export default function App() {
   const [pasting, setPasting] = useState(false)
   const [view, setViewState] = useState<View>(() => (window.location.hash === '#followups' ? 'followups' : 'board'))
   const [refreshKey, setRefreshKey] = useState(0)
+  const [sortMode, setSortModeState] = useState<SortMode>(loadSortMode)
+  const setSortMode = (m: SortMode) => {
+    setSortModeState(m)
+    saveSortMode(m)
+  }
   const setView = (v: View) => {
     setViewState(v)
     window.history.replaceState(null, '', v === 'board' ? '#' : '#followups')
@@ -51,7 +56,7 @@ export default function App() {
 
   const pipeline = useMemo(() => (contacts ?? []).filter((c) => c.status !== null), [contacts])
   const notALead = useMemo(() => (contacts ?? []).filter((c) => c.status === null), [contacts])
-  const visible = useMemo(() => applyFilters(pipeline, filters), [pipeline, filters])
+  const visible = useMemo(() => sortContacts(applyFilters(pipeline, filters), sortMode), [pipeline, filters, sortMode])
   const closeDrawer = useCallback(() => setOpenId(null), [])
 
   const move = async (id: number, status: string) => {
@@ -115,6 +120,7 @@ export default function App() {
                 {pipeline.length} in the pipeline · drag a card to change its status · click to open
               </p>
             </div>
+            <SortControl mode={sortMode} onChange={setSortMode} />
             <div className="overflow-x-auto pb-2">
               <Board meta={meta} contacts={visible} onOpen={setOpenId} onMove={move} />
             </div>

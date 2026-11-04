@@ -63,3 +63,9 @@
 - Usability: the customer's latest message sits right above the suggested reply, a one-line "copy, send,
   then Mark as sent" hint, important flags labelled on cards, "Program not stated" instead of "Not stated".
 - Bangla checked on every screen at 1366x768 (Hind Siliguri + Inter load; no fallback boxes).
+
+**Card order (2026-11-04):** columns can be sorted two ways, switched above the board (remembered per browser):
+"Priority first" (default: an urgent card beats a low / medium overdue one; overdue first within a priority)
+or "Overdue first" (all overdue cards on top, then priority). In both, ties go to whoever has waited longest.
+The Follow-ups list and the API default use priority first too, matching the weekly summary's chase-first list.
+Cards cannot be reordered by hand on purpose: the order is automatic, so nobody has to keep it tidy.

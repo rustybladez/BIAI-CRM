@@ -6,7 +6,7 @@ from sqlmodel import select
 
 from backend.ai.schema import Interest, Language, MessageType, Priority, Status
 from backend.api.meta import Channel
-from backend.api.models import ContactDetail, ContactSummary, sort_key, to_detail, to_summary
+from backend.api.models import ContactDetail, ContactSummary, SortMode, sort_key, to_detail, to_summary
 from backend.config import demo_now, parse_local
 from backend.db import Activity, Contact, SessionDep, utcnow
 from backend.normalize import NOT_A_LEAD, change_status, normalize_phone
@@ -33,9 +33,11 @@ def list_contacts(
     overdue: bool | None = None,
     message_type: Annotated[MessageType | None, Query(alias="type")] = None,
     lane: Annotated[str | None, Query(pattern="^(pipeline|not_a_lead)$")] = None,
+    sort: SortMode = "priority",
 ) -> list[ContactSummary]:
-    """Contacts, overdue first, then by priority. `lane=pipeline` hides spam / irrelevant;
-    `lane=not_a_lead` shows only them."""
+    """Contacts sorted by `sort`: `priority` (default: most urgent first, then overdue) or `overdue`
+    (overdue first, then priority); ties go to the longest wait. `lane=pipeline` hides spam /
+    irrelevant; `lane=not_a_lead` shows only them."""
     query = select(Contact)
     if status:
         query = query.where(Contact.status == status.value)
@@ -56,7 +58,7 @@ def list_contacts(
         items = [s for s in items if channel in s.channels]
     if overdue is not None:
         items = [s for s in items if s.overdue == overdue]
-    return sorted(items, key=sort_key)
+    return sorted(items, key=lambda c: sort_key(c, sort))
 
 
 @router.get("/{contact_id}")

@@ -33,12 +33,32 @@ def seed_ids(session, items) -> list[int]:
 
 
 # ---- list + filters ----
-def test_list_all_sorted_overdue_first(seeded):
+RANK = {"urgent": 0, "high": 1, "medium": 2, "low": 3}
+
+
+def test_default_sort_is_priority_then_overdue(seeded):
     items = client.get("/api/contacts").json()
     assert len(items) == 19
-    flags = [i["overdue"] for i in items]
-    assert flags == sorted(flags, reverse=True)  # all overdue ones first
-    assert items[0]["priority"] == "urgent" and items[0]["overdue"]  # Habibur (#16)
+    keys = [(RANK[i["priority"]], not i["overdue"]) for i in items]
+    assert keys == sorted(keys)  # urgent first; overdue before not overdue within a priority
+    new = [i["name"] for i in items if i["status"] == "New"]
+    assert new[0] == "Rafi Ahmed"  # urgent, not overdue, beats every overdue medium / low card
+
+
+def test_overdue_first_sort(seeded):
+    items = client.get("/api/contacts?sort=overdue").json()
+    keys = [(not i["overdue"], RANK[i["priority"]]) for i in items]
+    assert keys == sorted(keys)
+    new = [i["name"] for i in items if i["status"] == "New"]
+    assert new[0] == "Mahmud Hasan"  # high + overdue
+    assert new.index("Ishtiaq") < new.index("Rafi Ahmed")  # low but overdue, above urgent not overdue
+
+
+def test_ties_go_to_the_longest_wait(seeded):
+    items = client.get("/api/contacts").json()
+    medium_overdue = [i for i in items if i["priority"] == "medium" and i["overdue"]]
+    times = [i["last_inbound_at"] for i in medium_overdue]
+    assert times == sorted(times) and len(times) >= 2  # oldest message first
 
 
 @pytest.mark.parametrize(
@@ -62,7 +82,7 @@ def test_pipeline_lane(seeded):
     assert len(client.get("/api/contacts?lane=pipeline").json()) == 17
 
 
-@pytest.mark.parametrize("query", ["status=Done", "lane=x", "channel=Email", "type=lead2"])
+@pytest.mark.parametrize("query", ["status=Done", "lane=x", "channel=Email", "type=lead2", "sort=name"])
 def test_bad_filters_are_422(seeded, query):
     assert client.get(f"/api/contacts?{query}").status_code == 422
 
