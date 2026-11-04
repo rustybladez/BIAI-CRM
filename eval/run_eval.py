@@ -22,7 +22,7 @@ sys.path.insert(0, str(ROOT))
 from backend.ai.client import AIUnavailable, configured_providers  # noqa: E402
 from backend.ai.extract import extract_enquiry  # noqa: E402
 from backend.ai.schema import ExtractedEnquiry, GoldItem, Priority  # noqa: E402
-from backend.config import DHAKA  # noqa: E402
+from backend.config import DHAKA, parse_local  # noqa: E402
 from backend.seed.load import SeedRow, read_enquiries  # noqa: E402
 
 GOLD_PATH = ROOT / "eval" / "gold.json"
@@ -146,6 +146,46 @@ def mismatches(scores: dict[int, dict], rows: dict[int, SeedRow]) -> list[str]:
     return lines
 
 
+def system_checks(gold: dict[int, GoldItem], rows: dict[int, SeedRow], results: dict[int, dict]) -> list[str]:
+    """Run the code-side rules (normalize.py) over these AI results in a throwaway DB and compare
+    with system_expected. Returns failure lines; empty means 100%. Needs all 20 rows (merges)."""
+    from sqlmodel import Session, SQLModel, select
+
+    from backend.db import Enquiry, make_engine
+    from backend.normalize import ingest
+
+    engine = make_engine("sqlite://")
+    SQLModel.metadata.create_all(engine)
+    fails = []
+    with Session(engine) as session:
+        for row in sorted(rows.values(), key=lambda r: (parse_local(r.received_at), r.id)):
+            ex = ExtractedEnquiry.model_validate(results[row.id]["extraction"])
+            ingest(
+                session,
+                channel=row.channel,
+                received_at=parse_local(row.received_at),
+                sender_name=row.sender_name,
+                phone_raw=row.phone,
+                message=row.message,
+                extraction=ex,
+                seed_id=row.id,
+            )
+        session.commit()
+        contact = {e.seed_id: e.contact for e in session.exec(select(Enquiry)).all()}
+        for i, g in gold.items():
+            exp, c = g.system_expected, contact[i]
+            checks = {
+                "normalized_phone": (exp.normalized_phone, c.phone),
+                "missing_phone": (exp.missing_phone, c.missing_phone),
+            }
+            if exp.duplicate_of:
+                checks["duplicate_of"] = (True, c is contact[exp.duplicate_of])
+            if exp.priority_after_merge:
+                checks["priority_after_merge"] = (exp.priority_after_merge.value, c.priority)
+            fails += [f"| {i} | {k} | {e} | {v} |" for k, (e, v) in checks.items() if e != v]
+    return fails
+
+
 def run_one(row: SeedRow, providers) -> dict:
     try:
         r = extract_enquiry(
@@ -198,6 +238,9 @@ def main() -> int:
 
     table = summarise(scores)
     mism = mismatches(scores, rows)
+    sys_fails = None
+    if not args.ids and all(results[i]["extraction"] for i in ids):
+        sys_fails = system_checks(gold, rows, results)
     failed = [r for r in results.values() if r["extraction"] is None]
     fell_back = [
         r for r in results.values() if r["extraction"] and r["model_used"].split(":")[0] != providers[0].name
@@ -225,6 +268,17 @@ def main() -> int:
             else (f"≥ {target:.0%}" if f == "flags recall" else f"≥ {target * n:.0f}/{n}")
         )
         md.append(f"| {f} | {pct} | {tgt} | {'-' if met is None else ('yes' if met else '**no**')} |")
+    md += [
+        "",
+        "System rules (normalize.py: phone, missing phone, duplicate merge, merged priority): "
+        + (
+            "not checked (needs all 20 rows to succeed)"
+            if sys_fails is None
+            else ("all correct" if not sys_fails else f"**{len(sys_fails)} failures**")
+        ),
+    ]
+    if sys_fails:
+        md += ["", "| id | system field | expected | got |", "|---|---|---|---|", *sys_fails]
     md += ["", "## Mismatches", ""]
     if mism:
         md += ["| id | field | expected | got |", "|---|---|---|---|", *mism]

@@ -48,3 +48,12 @@ def test_failed_call_counts_only_scored_fields():
     assert table["follow_up_by date"][1:3] == (3, 3)
     assert table["team_size"][1:3] == (3, 3)  # #3, #10, #18
     assert run_eval.mismatches(scores, {}) == ["| 11 | all fields | (valid output) | AI call failed |"]
+
+
+def test_system_checks_pass_on_saved_ai_results():
+    import json
+    from pathlib import Path
+
+    rows = {r.id: r for r in read_enquiries()}
+    results = {i["id"]: i for i in json.loads(Path("backend/seed/ai_results.json").read_text())["items"]}
+    assert run_eval.system_checks(run_eval.load_gold(), rows, results) == []

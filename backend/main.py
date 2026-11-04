@@ -1,13 +1,29 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from sqlmodel import Session
 
-from backend.api import health, meta
+from backend.api import demo, health, meta
+from backend.db import create_tables, engine
+from backend.seed.seed import seed_if_empty
 
-app = FastAPI(title="BIAI CRM")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    # The filesystem is wiped on every redeploy (see NOTE.md), so reseed whenever the DB is empty.
+    create_tables()
+    with Session(engine) as session:
+        seed_if_empty(session)
+    yield
+
+
+app = FastAPI(title="BIAI CRM", lifespan=lifespan)
 
 app.include_router(meta.router)
 app.include_router(health.router)
+app.include_router(demo.router)
 
 # Built frontend (cd frontend && npm run build). Low priority: /api routes match first.
 app.frontend("/", directory=Path(__file__).parent / "static")

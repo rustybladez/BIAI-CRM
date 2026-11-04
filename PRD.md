@@ -369,9 +369,9 @@ Work in order. At the end of each milestone: tick the boxes, run the checks list
 - **Done when:** a public URL shows the placeholder page and calls the API.
 
 ### M3: Data layer + code rules (3h)
-- [ ] Tables (§6), `normalize.py` rules 1–7, demo clock
-- [ ] Reseed on boot from CSV + `ai_results.json` when DB is empty; `POST /api/demo/reset`
-- [ ] `pytest` tests in §10.3 all pass
+- [x] Tables (§6), `normalize.py` rules 1–7, demo clock
+- [x] Reseed on boot from CSV + `ai_results.json` when DB is empty; `POST /api/demo/reset`
+- [x] `pytest` tests in §10.3 all pass
 - **Done when:** fresh start → 19 contacts, Rafi merged and `urgent`, 6 missing phones, spam and job seeker out of the pipeline.
 
 ### M4: API (2h)

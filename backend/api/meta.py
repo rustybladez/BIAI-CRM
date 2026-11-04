@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from backend.ai.schema import AIFlag, Interest, Language, MessageType, Priority, Status
 from backend.config import demo_now
+from backend.normalize import SYSTEM_FLAGS
 
 router = APIRouter(prefix="/api", tags=["meta"])
 
@@ -18,6 +19,7 @@ class Meta(BaseModel):
     languages: list[str]
     priorities: list[str]
     flags: list[str]
+    system_flags: list[str]
     channels: list[str]
     demo_now: str
 
@@ -36,6 +38,7 @@ def get_meta() -> Meta:
         languages=_values(Language),
         priorities=_values(Priority),
         flags=_values(AIFlag),
+        system_flags=SYSTEM_FLAGS,
         channels=CHANNELS,
         demo_now=demo_now().strftime("%Y-%m-%dT%H:%M"),
     )
