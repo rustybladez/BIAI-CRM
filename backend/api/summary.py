@@ -79,7 +79,7 @@ def generate_weekly(session: SessionDep) -> WeeklyReport:
     try:
         entry = generate_summary(stats)
     except AIUnavailable as e:
-        return WeeklyReport(stats=stats, summary=None, error=f"AI is unavailable right now: {e}")
+        return WeeklyReport(stats=stats, summary=None, error=e.user_message())
     remember(entry)
     return WeeklyReport(stats=stats, summary=_out(entry, stats))
 

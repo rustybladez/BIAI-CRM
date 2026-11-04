@@ -7,6 +7,7 @@ API error, rate limit (429), timeout, or JSON that still fails Pydantic validati
 """
 
 import json
+import logging
 import os
 import re
 import time
@@ -16,6 +17,8 @@ from openai import OpenAI, OpenAIError
 from pydantic import BaseModel, ValidationError
 
 from backend import config  # noqa: F401  (loads .env)
+
+logger = logging.getLogger("biai.ai")
 
 
 @dataclass(frozen=True)
@@ -56,6 +59,11 @@ class AIUnavailable(RuntimeError):
         super().__init__(
             "; ".join(errors) or "no AI provider configured (set DEEPSEEK_API_KEY / GEMINI_API_KEY)"
         )
+
+    def user_message(self) -> str:
+        """Safe to show in the UI. Provider messages can contain parts of API keys, so they only go to the log."""
+        logger.warning("AI unavailable: %s", "; ".join(self.errors) or "no provider configured")
+        return "The AI is not responding right now. Please try again in a minute."
 
 
 @dataclass

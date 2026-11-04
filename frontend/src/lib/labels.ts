@@ -26,7 +26,7 @@ export const INTEREST_LABEL: Record<string, string> = {
   fellowship: 'Fellowship',
   corporate: 'Corporate',
   other: 'Other',
-  unclear: 'Not stated',
+  unclear: 'Program not stated',
   not_applicable: '—',
 }
 

@@ -54,3 +54,12 @@
   back (new contacts were not capped at "now"); fixed with a test.
 - A pre-generated summary for the seeded data ships in `seed/summary.json` (reused while the figures are
   unchanged), so the demo needs no live AI call. Any change to the data hides it until "Generate" is clicked.
+
+**M8, polish (2026-11-04):**
+- Tested with the AI switched off (invalid keys): every AI action shows a plain error and a retry; saved
+  drafts, Mark as sent, drag-and-drop and the summary figures keep working; a pasted message can be
+  filled in by hand so no enquiry is lost. The test also showed the raw provider error (with the last
+  characters of the API key) reaching the screen: now users see a plain message and details go to the log.
+- Usability: the customer's latest message sits right above the suggested reply, a one-line "copy, send,
+  then Mark as sent" hint, important flags labelled on cards, "Program not stated" instead of "Not stated".
+- Bangla checked on every screen at 1366x768 (Hind Siliguri + Inter load; no fallback boxes).

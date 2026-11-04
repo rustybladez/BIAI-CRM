@@ -74,7 +74,7 @@ def suggest_reply(session: SessionDep, contact_id: ContactId, req: ReplyRequest)
     try:
         draft = new_draft(contact, language)
     except AIUnavailable as e:
-        raise HTTPException(status_code=503, detail=f"AI is unavailable right now: {e}") from e
+        raise HTTPException(status_code=503, detail=e.user_message()) from e
     session.add(draft)
     session.commit()
     session.refresh(draft)

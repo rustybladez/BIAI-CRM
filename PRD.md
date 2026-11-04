@@ -399,9 +399,9 @@ Work in order. At the end of each milestone: tick the boxes, run the checks list
 - **Done when:** summary names Habibur (#16) and Rafi among "chase first", and every number in it matches the code-computed figures.
 
 ### M8: Polish + Bangla (2h)
-- [ ] Bangla font, rendering check on every screen; chips show বাংলা / Banglish / EN
-- [ ] Loading, empty and error states on every AI call; AI failure never breaks the page
-- [ ] Copy pass: all labels short and clear; demo FAQ note visible
+- [x] Bangla font, rendering check on every screen; chips show বাংলা / Banglish / EN
+- [x] Loading, empty and error states on every AI call; AI failure never breaks the page
+- [x] Copy pass: all labels short and clear; demo FAQ note visible
 - **Done when:** a non-technical person could use S1 → S2 → reply without explanation.
 
 ### M9: Final deploy + verification (1h)

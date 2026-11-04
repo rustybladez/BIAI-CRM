@@ -27,7 +27,7 @@ export function FlagChips({ contact, withLabels = false }: { contact: ContactSum
         return (
           <Chip key={f} className={cx('ring-1', TONE[meta.tone])} title={`${meta.label}: ${meta.explain}`}>
             <Icon className="size-3" aria-hidden />
-            {withLabels ? meta.label : <span className="sr-only">{meta.label}</span>}
+            {withLabels || meta.tone !== 'slate' ? meta.label : <span className="sr-only">{meta.label}</span>}
           </Chip>
         )
       })}

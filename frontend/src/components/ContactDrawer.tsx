@@ -208,6 +208,23 @@ export function ContactDrawer({
               </ul>
             )}
 
+            {(() => {
+              const latest = contact.enquiries.at(-1)
+              if (!latest) return null
+              return (
+                <section aria-label="Latest message">
+                  <div className="mb-1 flex items-center gap-1.5 text-xs text-slate-500">
+                    <ChannelIcon channel={latest.channel} />
+                    {contact.enquiry_count > 1 ? 'Latest message' : 'Message'} · {CHANNEL[latest.channel]?.short} ·{' '}
+                    {formatWhen(latest.received_at)}
+                  </div>
+                  <blockquote className="rounded-xl bg-slate-50 p-3 text-[15px] leading-relaxed text-slate-800 ring-1 ring-slate-200">
+                    {latest.message}
+                  </blockquote>
+                </section>
+              )
+            })()}
+
             <ReplyPanel
               key={`${contact.id}-${contact.enquiries.at(-1)?.id}`}
               contact={contact}

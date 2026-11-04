@@ -205,7 +205,10 @@ def test_analyse_503_when_ai_down(seeded, monkeypatch):
 
     monkeypatch.setattr(intake, "extract_enquiry", down)
     r = client.post("/api/intake/analyse", json=MSG)
-    assert r.status_code == 503 and "timeout" in r.json()["detail"]
+    assert (
+        r.status_code == 503
+        and r.json()["detail"] == "The AI is not responding right now. Please try again in a minute."
+    )
 
 
 @pytest.mark.parametrize(

@@ -143,6 +143,11 @@ export function ReplyPanel({ contact, onSent }: { contact: ContactDetail; onSent
               <Button variant="ghost" onClick={() => load(draft.language, true)}>
                 <RefreshCw className="size-4" /> Regenerate
               </Button>
+              <span className="text-xs text-slate-500">
+                {draft.format === 'call_script'
+                  ? 'Use it on the call, then click Mark as sent.'
+                  : 'Edit if needed, copy, send it in WhatsApp / Messenger, then click Mark as sent.'}
+              </span>
             </div>
             <div className="flex flex-wrap items-center gap-1 text-xs text-slate-500">
               <span>Facts from the FAQ:</span>
@@ -156,7 +161,8 @@ export function ReplyPanel({ contact, onSent }: { contact: ContactDetail; onSent
                 <span>none</span>
               )}
               <span className="ml-auto">
-                Demo FAQ, placeholder values{draft.model_used ? ` · ${draft.model_used} · ${draft.latency_ms} ms` : ''}
+                <span className="rounded bg-amber-50 px-1.5 py-0.5 text-amber-800 ring-1 ring-amber-200">Demo FAQ, placeholder values</span>
+                {draft.model_used ? ` · ${draft.model_used} · ${draft.latency_ms} ms` : ''}
               </span>
             </div>
           </>

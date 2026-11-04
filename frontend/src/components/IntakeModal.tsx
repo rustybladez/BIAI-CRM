@@ -92,6 +92,33 @@ export function IntakeModal({
     }
   }
 
+  // AI down: start from a blank record so the enquiry can still be saved.
+  const fillByHand = () => {
+    const manual: Extraction = {
+      message_type: 'lead',
+      message_type_reason: 'Entered by hand.',
+      name: msg.sender_name.replace(/\s*\(.*\)\s*$/, '').trim() || null,
+      role: null,
+      company: null,
+      team_size: null,
+      phone_in_message: null,
+      interest: 'unclear',
+      interest_detail: null,
+      language: /[\u0980-\u09FF]/.test(msg.message) ? 'bangla' : 'english',
+      status: 'New',
+      priority: 'medium',
+      priority_reason: 'Entered by hand while the AI was unavailable.',
+      follow_up_by: null,
+      flags: [],
+      summary: msg.message.slice(0, 140),
+      missing_info: [],
+      low_confidence_fields: [],
+    }
+    setResult({ extraction: manual, model_used: 'entered by hand', latency_ms: 0, phone: null, missing_phone: !msg.phone, status: 'New', duplicate: null })
+    setEx(manual)
+    setError(null)
+  }
+
   const canAnalyse = msg.sender_name.trim() && msg.message.trim()
   const unsure = (k: string) => ex?.low_confidence_fields.includes(k)
   const exField = (k: keyof Extraction, input: React.ReactNode) => (
@@ -194,11 +221,22 @@ export function IntakeModal({
             {busy === 'analyse' && <Spinner label="Reading the message… (a few seconds)" />}
           </div>
           {error && <ErrorNote message={error} onRetry={result ? save : analyse} />}
+          {error && !result && (
+            <p className="text-sm text-slate-600">
+              Or{' '}
+              <button onClick={fillByHand} className="font-medium text-indigo-700 underline">
+                fill in the details by hand
+              </button>{' '}
+              so the enquiry is not lost.
+            </p>
+          )}
 
           {result && ex && (
             <section className="space-y-3 rounded-2xl border border-slate-200 p-4" aria-label="Review">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="font-semibold text-slate-900">Check what the AI found</h3>
+                <h3 className="font-semibold text-slate-900">
+                  {result.model_used === 'entered by hand' ? 'Fill in the details' : 'Check what the AI found'}
+                </h3>
                 <span className="text-xs text-slate-500">
                   {result.model_used} · {result.latency_ms} ms
                 </span>

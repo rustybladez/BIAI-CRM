@@ -98,7 +98,7 @@ def test_summary_ai_down_still_returns_figures(seeded, monkeypatch):
 
     monkeypatch.setattr(sm, "call_json", down)
     r = client.post("/api/summary/weekly").json()
-    assert r["summary"] is None and "503" in r["error"] and r["stats"]["pipeline_total"] == 17
+    assert r["summary"] is None and "not responding" in r["error"] and r["stats"]["pipeline_total"] == 17
 
 
 def test_export_csv(seeded):
@@ -116,3 +116,11 @@ def test_export_csv(seeded):
 def test_this_week_counts_stop_at_the_demo_clock(seeded):
     st = sm.compute_stats(seeded, datetime(2026, 10, 26, 10, 0, tzinfo=DHAKA))
     assert st["this_week"] == {"messages_received": 2, "new_contacts": 2, "replies_sent": 0}  # #1, #2 only
+
+
+def test_ai_error_never_leaks_provider_text(seeded, monkeypatch):
+    def down(*a, **k):
+        raise AIUnavailable(["deepseek: AuthenticationError: Your api key: ****abcd is invalid"])
+
+    monkeypatch.setattr(sm, "call_json", down)
+    assert "abcd" not in client.post("/api/summary/weekly").json()["error"]

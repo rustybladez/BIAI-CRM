@@ -56,7 +56,7 @@ def analyse(session: SessionDep, msg: IntakeMessage) -> AnalyseResult:
     try:
         result = extract_enquiry(msg.channel, msg.received(), msg.sender_name, msg.phone, msg.message)
     except AIUnavailable as e:
-        raise HTTPException(status_code=503, detail=f"AI is unavailable right now: {e}") from e
+        raise HTTPException(status_code=503, detail=e.user_message()) from e
     ex = result.data
     phone = resolve_phone(msg.phone, ex.phone_in_message)
     dup = find_duplicate(session, phone)
