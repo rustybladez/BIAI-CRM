@@ -5,6 +5,7 @@ Score AI extraction against eval/gold.json (PRD §10.1).
     uv run python eval/run_eval.py --model gemini     # one provider only, no fallback
     uv run python eval/run_eval.py --ids 2,7,13,18    # e.g. Bangla-script rows only
     uv run python eval/run_eval.py --no-save          # don't touch ai_results.json / report.md
+    uv run python eval/run_eval.py --report-only      # write report.md, keep the seeded ai_results.json
 
 Writes backend/seed/ai_results.json (seed data for the app) and eval/report.md.
 """
@@ -208,6 +209,11 @@ def main() -> int:
     ap.add_argument("--model", choices=["deepseek", "gemini"], help="use only this provider (no fallback)")
     ap.add_argument("--ids", help="comma-separated enquiry ids, e.g. 2,7,13,18")
     ap.add_argument("--no-save", action="store_true", help="do not write ai_results.json / report.md")
+    ap.add_argument(
+        "--report-only",
+        action="store_true",
+        help="write eval/report.md but keep backend/seed/ai_results.json (seed replies and summary depend on it)",
+    )
     ap.add_argument("--workers", type=int, default=4)
     args = ap.parse_args()
 
@@ -253,6 +259,7 @@ def main() -> int:
         "",
         f"- Date: {now} (Asia/Dhaka)",
         f"- Routing: {routing}",
+        f"- Seed data: backend/seed/ai_results.json {'kept (report-only run)' if args.report_only else 'rewritten from this run' if not args.no_save else 'not touched'}",
         f"- Enquiries: {len(ids)} ({'all' if not args.ids else 'ids ' + args.ids})",
         f"- Calls that fell back to another provider: {len(fell_back)}; failed completely: {len(failed)}",
         f"- Median latency: {latencies[len(latencies) // 2] if latencies else '-'} ms",
@@ -279,6 +286,22 @@ def main() -> int:
     ]
     if sys_fails:
         md += ["", "| id | system field | expected | got |", "|---|---|---|---|", *sys_fails]
+    near = [
+        f"| {i} | priority | {_norm(s['priority (exact)'][1])} | {_norm(s['priority (exact)'][2])} |"
+        for i, s in sorted(scores.items())
+        if not s.get("failed") and s["priority (exact)"][0] is False and s["priority (±1)"][0]
+    ]
+    if near:
+        md += [
+            "",
+            "## Within tolerance (counted as correct)",
+            "",
+            "Priority one level away from the gold label. The scoring rules accept this; listed for transparency.",
+            "",
+            "| id | field | expected | got |",
+            "|---|---|---|---|",
+            *near,
+        ]
     md += ["", "## Mismatches", ""]
     if mism:
         md += ["| id | field | expected | got |", "|---|---|---|---|", *mism]
@@ -292,7 +315,10 @@ def main() -> int:
     report = "\n".join(md) + "\n"
     print("\n" + report)
 
-    if not args.no_save:
+    if args.report_only and not args.no_save:
+        REPORT_PATH.write_text(report, encoding="utf-8")
+        print(f"Saved {REPORT_PATH.relative_to(ROOT)} (seed ai_results.json unchanged)")
+    elif not args.no_save:
         existing = {}
         if RESULTS_PATH.exists():
             existing = {r["id"]: r for r in json.loads(RESULTS_PATH.read_text(encoding="utf-8"))["items"]}

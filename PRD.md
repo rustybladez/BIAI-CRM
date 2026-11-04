@@ -405,9 +405,9 @@ Work in order. At the end of each milestone: tick the boxes, run the checks list
 - **Done when:** a non-technical person could use S1 → S2 → reply without explanation.
 
 ### M9: Final deploy + verification (1h)
-- [ ] Deployed build matches local; reset endpoint works on prod
-- [ ] Run the demo script (§12) on the public URL end to end
-- [ ] Re-run `eval/run_eval.py --no-save` and `pytest`; save final numbers in `eval/report.md`
+- [x] Deployed build matches local; reset endpoint works on prod
+- [x] Run the demo script (§12) on the public URL end to end
+- [x] Re-run `eval/run_eval.py --no-save` and `pytest`; save final numbers in `eval/report.md`
 - **Done when:** the public URL passes the full demo script twice in a row.
 
 ### M10: Deliverables (3h; owner-led, Claude Code assists)
@@ -498,11 +498,11 @@ Tips: face cam on, speak to BIAI's problem not the tech stack, rehearse transiti
 
 ## 16. Definition of done (pre-submission)
 
-- [ ] Public URL loads in under 3 seconds and passes the §12 script twice in a row
-- [ ] All 20 sample enquiries visible and correctly placed (19 contacts, 2 in Not-a-lead, Rafi merged)
-- [ ] `pytest` green; eval report saved with final numbers
-- [ ] Every AI call has loading and error states; no console errors
-- [ ] Bangla renders correctly on every screen
-- [ ] No API keys in the repo; `.env.example` present
+- [x] Public URL loads in under 3 seconds and passes the §12 script twice in a row
+- [x] All 20 sample enquiries visible and correctly placed (19 contacts, 2 in Not-a-lead, Rafi merged)
+- [x] `pytest` green; eval report saved with final numbers
+- [x] Every AI call has loading and error states; no console errors
+- [x] Bangla renders correctly on every screen
+- [x] No API keys in the repo; `.env.example` present
 - [ ] README, NOTE, Loom (≤ 5:00), live link, repo link ready
 - [ ] Live-change rehearsal done

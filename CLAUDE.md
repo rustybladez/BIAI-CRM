@@ -64,7 +64,8 @@ eval/run_eval.py     scores the AI against gold.json, prints a table
 ## Commands
 - Backend: `uv run fastapi dev` (entrypoint `backend.main:app` is set in pyproject.toml)
 - Frontend: `cd frontend && npm run dev` (proxy `/api` to the backend); build with `npm run build` into `backend/static`
-- Eval: `uv run python eval/run_eval.py`
+- Eval: `uv run python eval/run_eval.py` (rewrites seed AI results); `--report-only` writes `eval/report.md` and keeps
+  `backend/seed/ai_results.json` (use this one: the seeded replies and weekly summary depend on those results)
 - Replies: `uv run python eval/run_reply_checks.py` (checks saved drafts); add `--generate` to rewrite
   `backend/seed/replies.json` with the AI (run it after changing faq.yaml or the reply prompt)
 - Weekly summary: `uv run python eval/run_summary_check.py` (checks the saved one); `--generate` rewrites

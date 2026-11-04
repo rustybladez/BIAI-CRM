@@ -80,3 +80,13 @@ overview and the "Not a lead" tray at the bottom. Redesigned around a left sideb
   reply composer docked under it, properties on the right with click-to-edit, ‹ › to step through the queue.
 - **New enquiry** in two panes, **Reports** page, search (name, phone, company, message text, Bangla included),
   demo clock and reset moved into a "Demo mode" box. Shortcuts: `/` search, `n` new enquiry, `j`/`k` next/previous.
+
+**M9, final verification (2026-11-04, live URL):**
+- Production serves byte-identical files to the local build; reset works there (19 contacts, 17 in the
+  pipeline, 6 overdue, clock back to 28 Oct 12:00); Today screen ready in 0.8-1.3 s.
+- Browser demo script (14 steps, live AI for paste, reply language switch and weekly summary) passed twice in a
+  row on the public URL with no console errors.
+- Fresh extraction eval (report-only run, seed data unchanged): every target met, 20/20 on all scored fields;
+  exact priority 19/20 (#6 rated medium vs gold low, within the accepted one-level tolerance and listed in the
+  report). Runs vary slightly: the previous run had 18/20 exact priority.
+- 108 backend tests, reply checks (55 drafts) and summary checks all pass; no API keys in the repo.
