@@ -1,0 +1,8 @@
+# Only the backend (with the built frontend in backend/static) is needed to run the app.
+frontend/
+tests/
+eval/
+.claude/
+PRD.md
+NOTE.md
+CLAUDE.md

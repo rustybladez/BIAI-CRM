@@ -10,6 +10,9 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
 
+# SQLite DB and other runtime files. Assume it can be wiped on restart (reseed on boot).
+DATA_DIR = Path(os.getenv("DATA_DIR") or ROOT / "data")
+
 DHAKA = ZoneInfo("Asia/Dhaka")
 DEFAULT_DEMO_NOW = "2026-10-28T12:00"
 

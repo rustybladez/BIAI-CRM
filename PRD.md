@@ -363,9 +363,9 @@ Work in order. At the end of each milestone: tick the boxes, run the checks list
 - **Done when:** report shows targets met (or honest numbers with reasons), and `ai_results.json` has 20 valid entries.
 
 ### M2: Deploy smoke test (1h)
-- [ ] Frontend builds into `backend/static`; `app.frontend("/", directory="static")` serves it
-- [ ] Deployed to FastAPI Cloud with env vars; `/api/meta` and the page work from the public URL
-- [ ] Confirm whether the SQLite file survives a redeploy; record the answer in `NOTE.md` draft
+- [x] Frontend builds into `backend/static`; `app.frontend("/", directory="static")` serves it
+- [x] Deployed to FastAPI Cloud with env vars; `/api/meta` and the page work from the public URL
+- [x] Confirm whether the SQLite file survives a redeploy; record the answer in `NOTE.md` draft
 - **Done when:** a public URL shows the placeholder page and calls the API.
 
 ### M3: Data layer + code rules (3h)

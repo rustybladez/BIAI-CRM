@@ -15,3 +15,8 @@ def test_csv_reads_all_rows_despite_bom():
     assert [r.id for r in rows] == list(range(1, 21))
     assert sum(r.phone is None for r in rows) == 6
     assert rows[6].message.startswith("পেমেন্ট")
+
+
+def test_health():
+    data = TestClient(app).get("/api/health").json()
+    assert data["ok"] and data["boot_count"] >= 1

@@ -65,6 +65,9 @@ eval/run_eval.py     scores the AI against gold.json, prints a table
 - Backend: `uv run fastapi dev` (entrypoint `backend.main:app` is set in pyproject.toml)
 - Frontend: `cd frontend && npm run dev` (proxy `/api` to the backend); build with `npm run build` into `backend/static`
 - Eval: `uv run python eval/run_eval.py`
+- Deploy: `npm run build` (in frontend/), then `uv run fastapi deploy` → https://biai-crm.fastapicloud.dev
+  (first time on a new machine: `uv run fastapi login`, then `uv run fastapi cloud link`). The filesystem is wiped on
+  every redeploy, so the DB must reseed on boot.
 - Checks: `uv run ruff check backend tests eval && uv run pytest -q`; frontend `npm run lint && npm run build`
 - `backend/static/` (the built frontend) is committed so a fresh clone and FastAPI Cloud can serve it without Node.
 

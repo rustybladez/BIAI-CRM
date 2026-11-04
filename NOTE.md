@@ -17,3 +17,10 @@
   must not depend on it: seeded AI results (`backend/seed/ai_results.json`) mean no live call is needed.
 - Caveat: 20 rows is a small test set, and the prompt was tuned on it (by rules, not examples), so real-world
   accuracy will be lower than 100%.
+
+**M2, deploy (2026-11-04):** live at https://biai-crm.fastapicloud.dev (FastAPI Cloud, deployed with `fastapi deploy`).
+- **The filesystem does not survive a redeploy.** `/api/health` counts boots in `data/boot_count.txt`; after a
+  redeploy the new instance started again at 1. So SQLite is rebuilt from `backend/seed/` on every boot
+  (as planned), and anything staff change on the live demo is lost on the next deploy. Fine for a demo;
+  a real rollout needs Postgres.
+- Only `backend/`, `pyproject.toml` and `uv.lock` are uploaded (`.gitignore` + `.fastapicloudignore`), about 190 KB.

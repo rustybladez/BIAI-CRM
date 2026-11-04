@@ -232,3 +232,6 @@ frontend/dist/
 *.sqlite3
 # Claude Code local settings
 .claude/settings.local.json
+
+# Runtime data (SQLite DB, boot counter)
+/data/
