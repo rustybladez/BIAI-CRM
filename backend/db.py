@@ -88,7 +88,7 @@ class Activity(SQLModel, table=True):
 
 
 class ReplyDraft(SQLModel, table=True):
-    """AI-suggested reply (filled in M5)."""
+    """AI-suggested reply draft (one per enquiry + language; the newest is shown)."""
 
     id: int | None = Field(default=None, primary_key=True)
     contact_id: int = Field(foreign_key="contact.id", index=True, ondelete="CASCADE")
@@ -98,6 +98,8 @@ class ReplyDraft(SQLModel, table=True):
     body: str = ""
     faq_keys_used: list[str] = Field(default_factory=list, sa_type=JSON)
     needs_confirmation: list[str] = Field(default_factory=list, sa_type=JSON)
+    model_used: str | None = None
+    latency_ms: int | None = None
     created_at: datetime = Field(default_factory=utcnow)
 
     contact: Contact = Relationship(back_populates="reply_drafts")

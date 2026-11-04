@@ -24,3 +24,20 @@
   (as planned), and anything staff change on the live demo is lost on the next deploy. Fine for a demo;
   a real rollout needs Postgres.
 - Only `backend/`, `pyproject.toml` and `uv.lock` are uploaded (`.gitignore` + `.fastapicloudignore`), about 190 KB.
+
+**M5, replies (2026-11-04, `eval/replies.md`):**
+- Code decides the reply format (spam: none, Facebook comment: public, phone note: call script), the language
+  and what to ask for (missing phone, transaction ID...); the AI writes the words from `seed/faq.yaml` only
+  (fictional placeholder values, `placeholder: true`); anything not in the FAQ goes to "team will confirm".
+- Code then checks every draft: numbers not in the FAQ or the customer's message, letters from other
+  scripts, wrong script for the language, public comments over 2 sentences. On a problem the AI rewrites once;
+  what is left shows "check before sending".
+- Reading the first 55 drafts found what the automatic checks missed: DeepSeek sometimes slips a Cyrillic or
+  Bangla word into a reply ("онлайн" inside a Bangla reply), and our own FAQ wording made "onsite" sound like our
+  campus. Both fixed (script check + FAQ). Now 55/55 drafts pass all checks; #7 asks for the bKash transaction
+  ID, #16 is a call script that quotes the refund policy without promising an outcome, #11 gets no reply,
+  #17 says the certificate is not government approved.
+- Limit: the number guard checks numbers one by one, so a wrong "3" passes because the FAQ contains a "3".
+  Dates written in words ("March") are not checked.
+- All 19 seeded contacts ship with drafts in all three languages (`seed/replies.json`), so the demo and the
+  language switch need no live AI call.

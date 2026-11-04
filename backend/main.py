@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from sqlmodel import Session
 
-from backend.api import contacts, demo, followups, health, intake, meta
+from backend.api import contacts, demo, followups, health, intake, meta, replies
 from backend.db import create_tables, engine
 from backend.seed.seed import seed_if_empty
 
@@ -27,6 +27,7 @@ app.include_router(demo.router)
 app.include_router(contacts.router)
 app.include_router(intake.router)
 app.include_router(followups.router)
+app.include_router(replies.router)
 
 # Built frontend (cd frontend && npm run build). Low priority: /api routes match first.
 app.frontend("/", directory=Path(__file__).parent / "static")

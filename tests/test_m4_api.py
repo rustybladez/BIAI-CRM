@@ -74,7 +74,11 @@ def test_detail_rafi(seeded):
     assert [a["kind"] for a in d["activities"]] == ["inbound", "inbound", "merge"]
     assert d["enquiries"][0]["received_at"] == "2026-10-26T09:12:00+06:00"  # Dhaka time out
     assert d["enquiries"][0]["extraction"]["interest"] == "bootcamp"
-    assert d["reply_draft"] is None and d["enquiry_count"] == 2 and d["channels"] == ["WhatsApp"]
+    assert (
+        d["reply_draft"]["language"] == "banglish"
+        and d["enquiry_count"] == 2
+        and d["channels"] == ["WhatsApp"]
+    )
 
 
 def test_detail_404(seeded):

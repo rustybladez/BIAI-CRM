@@ -8,6 +8,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from backend.ai.replies import draft_warnings, unverified_numbers
 from backend.ai.schema import Priority
 from backend.config import DHAKA
 from backend.db import Contact, Enquiry, ReplyDraft
@@ -75,7 +76,12 @@ class ReplyDraftOut(BaseModel):
     body: str
     faq_keys_used: list[str]
     needs_confirmation: list[str]
+    model_used: str | None
+    latency_ms: int | None
     created_at: datetime
+    unverified_numbers: list[str]  # numbers not in the FAQ or the customer's messages
+    warnings: list[str]  # code checks: script, language, length, numbers
+    check_before_sending: bool
 
 
 class ContactDetail(ContactSummary):
@@ -149,11 +155,19 @@ def to_detail(c: Contact, now: datetime) -> ContactDetail:
             ActivityOut(id=a.id, kind=a.kind, body=a.body, at=local(a.at))
             for a in sorted(c.activities, key=lambda a: (a.at, a.id))
         ],
-        reply_draft=ReplyDraftOut(
-            **latest.model_dump(exclude={"created_at", "contact_id"}), created_at=local(latest.created_at)
-        )
-        if latest
-        else None,
+        reply_draft=draft_out(latest, c) if latest else None,
+    )
+
+
+def draft_out(d: ReplyDraft, c: Contact) -> ReplyDraftOut:
+    messages = [e.message for e in c.enquiries]
+    warnings = draft_warnings(d.body, d.language, d.format, messages)
+    return ReplyDraftOut(
+        **d.model_dump(exclude={"created_at", "contact_id"}),
+        created_at=local(d.created_at),
+        unverified_numbers=unverified_numbers(d.body, messages),
+        warnings=warnings,
+        check_before_sending=bool(warnings),
     )
 
 

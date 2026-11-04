@@ -380,9 +380,9 @@ Work in order. At the end of each milestone: tick the boxes, run the checks list
 - **Done when:** every endpoint works from `/docs`; intake of an invented Banglish message creates a correct contact.
 
 ### M5: Replies + FAQ (2.5h)
-- [ ] `faq.yaml` (§7.4), reply prompt + `SuggestedReply` model (§7.3), number guard
-- [ ] Pre-generate replies for all seeded contacts into the seed (so the demo needs no live call)
-- [ ] `eval/run_reply_checks.py` and `eval/replies.md`
+- [x] `faq.yaml` (§7.4), reply prompt + `SuggestedReply` model (§7.3), number guard
+- [x] Pre-generate replies for all seeded contacts into the seed (so the demo needs no live call)
+- [x] `eval/run_reply_checks.py` and `eval/replies.md`
 - **Done when:** checks in §10.2 pass; #7 asks for the bKash transaction ID; #16 is a call script; #11 has no reply; #17 does not claim government approval.
 
 ### M6: Frontend (6h)

@@ -1,0 +1,99 @@
+# DEMO FAQ. Every value here is a FICTIONAL PLACEHOLDER made up for this task, not BIAI's real
+# prices or policies. The UI labels it "Demo FAQ, placeholder values".
+#
+# Replies may only state facts written here. Anything else -> "the team will confirm".
+# Each entry: question (what it answers) and answer (the facts, in English; the AI translates).
+
+placeholder: true
+
+entries:
+  bootcamp:
+    question: What is the bootcamp, how long is it, and what does it cost?
+    answer: >-
+      The AI Bootcamp is a 3-day intensive course (Friday to Sunday, 10 AM to 5 PM).
+      Fee: 8,500 taka. It runs every month, live online, and the next batch starts on 6 December 2026.
+
+  fellowship:
+    question: What is the fellowship, how long is it, when does it start and what does it cost?
+    answer: >-
+      The AI Fellowship is a 6-month program with live classes on weekday evenings and Saturdays.
+      Fee: 45,000 taka. The next batch starts on 15 January 2027. Admission closes on 31 December 2026.
+
+  fellowship_instalments:
+    question: Can the fellowship fee be paid in instalments?
+    answer: >-
+      Yes. The fellowship fee can be paid in 2 instalments: 25,000 taka at admission and
+      20,000 taka before the start of month 3. The bootcamp fee is paid in full.
+
+  fellowship_eligibility:
+    question: Who can join the fellowship? Do I need a technical background?
+    answer: >-
+      The fellowship is open to graduates and working professionals. No coding background is needed;
+      the first month covers Python basics. Non-technical professionals (marketing, HR, finance) are welcome.
+
+  corporate_training:
+    question: Do you train company teams? What does it cost? Is there a group discount?
+    answer: >-
+      Yes. Corporate training is designed for each company, online or onsite at the company's own office
+      in Dhaka (outside Dhaka: the team will confirm).
+      Pricing is a custom quote based on team size and topics; group pricing is part of the quote.
+      A BIAI trainer calls to understand the team's needs, then sends a written proposal.
+
+  class_format:
+    question: Are classes live or recorded? Do I get the recordings?
+    answer: >-
+      All classes are live, with Q&A. Every class is recorded, and students can watch the recordings
+      for 6 months after the course ends.
+
+  venue:
+    question: Where are the offline classes?
+    answer: >-
+      Courses are online. Offline sessions happen at the BIAI campus in Dhanmondi, Dhaka.
+      There is no Mirpur campus.
+
+  certificate:
+    question: Is the certificate government approved?
+    answer: >-
+      Students who finish the course get a BIAI certificate of completion. It is NOT a government
+      approved certificate.
+
+  refund_policy:
+    question: Can I get a refund?
+    answer: >-
+      Full refund if you cancel at least 7 days before the course starts. 50% refund if you cancel
+      within the first week of classes. No refund after the first week. Refunds are paid back within
+      10 working days to the original payment method.
+
+  student_discount:
+    question: Is there a student discount?
+    answer: >-
+      Yes. University students get 10% off the bootcamp and the fellowship with a valid student ID.
+
+  payment_methods:
+    question: How do I pay? How is a payment confirmed?
+    answer: >-
+      Pay by bKash, Nagad or bank transfer. To confirm a payment, send the transaction ID and the
+      name used for the payment. Payments are usually confirmed within 1 working day.
+
+  free_masterclass:
+    question: What is the free masterclass? Who can join?
+    answer: >-
+      A free 1-hour online AI masterclass is held on the last Saturday of every month.
+      Anyone can join, including school students. Registration is on BIAI's Facebook page.
+
+  job_support:
+    question: Will I get a job after the course?
+    answer: >-
+      BIAI does not guarantee jobs. Fellowship students get career support: CV review, mock
+      interviews and introductions to hiring partners.
+
+  careers:
+    question: Is BIAI hiring? How do I apply for a job or internship?
+    answer: >-
+      BIAI posts job and internship openings on its Facebook page and LinkedIn. Applicants send a CV
+      to the careers email listed in each post.
+
+  support_contact:
+    question: How do I reach the team?
+    answer: >-
+      The team replies on WhatsApp and Facebook Messenger, Sunday to Thursday, 10 AM to 6 PM.

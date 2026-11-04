@@ -119,3 +119,23 @@ class GoldItem(BaseModel):
     expected: ExtractedEnquiry
     system_expected: SystemExpected
     notes: str = ""
+
+# ---- Reply suggestion (PRD §7.3) ----
+
+
+class ReplyFormat(str, Enum):
+    text = "text"                      # normal chat / email reply
+    public_comment = "public_comment"  # Facebook comment: short, public, invite to inbox
+    call_script = "call_script"        # phone call note: what to say when calling back
+    none = "none"                      # spam: no reply
+
+
+class SuggestedReply(BaseModel):
+    body: str = Field(description="The reply text, in the target language and format.")
+    faq_keys_used: list[str] = Field(
+        default_factory=list, description="Keys of the FAQ entries whose facts the reply uses."
+    )
+    needs_confirmation: list[str] = Field(
+        default_factory=list,
+        description="Questions the customer asked that the FAQ does not answer (short English).",
+    )
