@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel, field_validator
 
-from backend.config import demo_now, parse_local, set_demo_now
+from backend.config import demo_now, initial_demo_now, parse_local, set_demo_now
 from backend.db import SessionDep
 from backend.seed.seed import reset
 
@@ -14,7 +14,9 @@ class ResetResult(BaseModel):
 
 @router.post("/reset")
 def reset_demo(session: SessionDep) -> ResetResult:
-    """Wipe the DB and reload the 20 sample enquiries with their pre-generated AI results."""
+    """Wipe the DB, reload the 20 sample enquiries with their pre-generated AI results,
+    and put the demo clock back to DEMO_NOW."""
+    set_demo_now(initial_demo_now())
     return ResetResult(enquiries=reset(session))
 
 

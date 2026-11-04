@@ -20,7 +20,12 @@ require('fs').mkdirSync(S, { recursive: true });
   const replyText = () => drawer().getByRole('textbox', { name: 'Reply text' });
   const drawer = () => p.getByRole('dialog', { name: 'Contact details' });
 
-  await p.request.post(BASE + '/api/demo/reset'); await p.request.put(BASE + '/api/demo/clock', { data: { demo_now: '2026-10-28T12:00' } });
+  // Reset from inside the page (the browser uses the network proxy; Playwright's request API may not).
+  await p.goto(BASE);
+  await p.evaluate(async () => {
+    await fetch('/api/demo/reset', { method: 'POST' });
+    await fetch('/api/demo/clock', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ demo_now: '2026-10-28T12:00' }) });
+  });
   await step('1 board loads: 17 in pipeline, 2 not a lead', async () => {
     await p.goto(BASE); await p.getByText('in the pipeline').waitFor();
     const n = await p.locator('[data-testid^=column-] [data-testid^=card-]').count();

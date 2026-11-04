@@ -217,3 +217,9 @@ def test_intake_validation(seeded, bad):
 
 def test_parse_local_is_dhaka():
     assert parse_local("2026-10-28T12:00").utcoffset().total_seconds() == 6 * 3600
+
+
+def test_reset_restores_demo_clock(seeded):
+    client.put("/api/demo/clock", json={"demo_now": "2026-10-26T10:00"})
+    client.post("/api/demo/reset")
+    assert client.get("/api/meta").json()["demo_now"] == "2026-10-28T12:00"

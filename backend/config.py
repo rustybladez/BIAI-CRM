@@ -23,7 +23,11 @@ def parse_local(value: str) -> datetime:
     return dt.replace(tzinfo=DHAKA) if dt.tzinfo is None else dt.astimezone(DHAKA)
 
 
-_demo_now = parse_local(os.getenv("DEMO_NOW") or DEFAULT_DEMO_NOW)
+def initial_demo_now() -> datetime:
+    return parse_local(os.getenv("DEMO_NOW") or DEFAULT_DEMO_NOW)
+
+
+_demo_now = initial_demo_now()
 
 
 def demo_now() -> datetime:
