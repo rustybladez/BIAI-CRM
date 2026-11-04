@@ -1,0 +1,600 @@
+{
+  "generated_at": "2026-11-04 08:35",
+  "routing": "deepseek:deepseek-flash -> gemini:gemini-3.5-flash",
+  "items": [
+    {
+      "id": 1,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 2696,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "lead",
+        "message_type_reason": "Prospect asking about bootcamp price and how to pay.",
+        "name": "Rafi Ahmed",
+        "role": null,
+        "company": null,
+        "team_size": null,
+        "phone_in_message": null,
+        "interest": "bootcamp",
+        "interest_detail": "Price of the 3-day bootcamp and payment process",
+        "language": "banglish",
+        "status": "New",
+        "priority": "high",
+        "priority_reason": "Clear buying signal, asking how to pay.",
+        "follow_up_by": null,
+        "flags": [],
+        "summary": "Rafi asks the price of the 3-day bootcamp and how to make payment.",
+        "missing_info": [],
+        "low_confidence_fields": []
+      }
+    },
+    {
+      "id": 2,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 2218,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "lead",
+        "message_type_reason": "Prospect asking when the fellowship program starts, indicating she wants to enrol.",
+        "name": "Tahmina Akter",
+        "role": null,
+        "company": null,
+        "team_size": null,
+        "phone_in_message": null,
+        "interest": "fellowship",
+        "interest_detail": "Wants to enrol in fellowship; asks start date",
+        "language": "bangla",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Normal pre-purchase question about fellowship start date.",
+        "follow_up_by": null,
+        "flags": [],
+        "summary": "Tahmina wants to join the fellowship and asks when the next batch starts.",
+        "missing_info": [],
+        "low_confidence_fields": []
+      }
+    },
+    {
+      "id": 3,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 3370,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "lead",
+        "message_type_reason": "Company MD wants AI training for his team.",
+        "name": "Mahmud Hasan",
+        "role": "Managing Director",
+        "company": "Gazipur textile company",
+        "team_size": 40,
+        "phone_in_message": null,
+        "interest": "corporate",
+        "interest_detail": "AI training for 40-person team; wants a call this week",
+        "language": "english",
+        "status": "New",
+        "priority": "high",
+        "priority_reason": "Corporate deal from a decision-maker requesting a callback.",
+        "follow_up_by": "2026-10-29T17:00",
+        "flags": [
+          "callback_requested",
+          "group_or_bulk"
+        ],
+        "summary": "Managing Director of a 40-person Gazipur textile company wants AI training for his team and a call this week.",
+        "missing_info": [],
+        "low_confidence_fields": []
+      }
+    },
+    {
+      "id": 4,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 3140,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "lead",
+        "message_type_reason": "Prospect asks whether classes are live or recorded and if recordings are available.",
+        "name": "Sabbir",
+        "role": null,
+        "company": null,
+        "team_size": null,
+        "phone_in_message": null,
+        "interest": "unclear",
+        "interest_detail": "Live vs recorded classes; recording availability",
+        "language": "banglish",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Normal pre-purchase question about class format.",
+        "follow_up_by": null,
+        "flags": [],
+        "summary": "Sabbir asks whether classes are live or recorded and whether recordings are available.",
+        "missing_info": [
+          "which program"
+        ],
+        "low_confidence_fields": []
+      }
+    },
+    {
+      "id": 5,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 3382,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "lead",
+        "message_type_reason": "Prospective student calling to ask about a student discount.",
+        "name": "Nasreen Sultana",
+        "role": null,
+        "company": null,
+        "team_size": null,
+        "phone_in_message": null,
+        "interest": "unclear",
+        "interest_detail": "Asks about student discount; will call back tomorrow after 5 PM",
+        "language": "english",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Normal pre-purchase question about a discount, no urgency.",
+        "follow_up_by": "2026-10-27T17:00",
+        "flags": [
+          "callback_requested"
+        ],
+        "summary": "Nasreen Sultana called about a student discount and will call again tomorrow after 5 PM.",
+        "missing_info": [
+          "which program"
+        ],
+        "low_confidence_fields": [
+          "interest"
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 2602,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "lead",
+        "message_type_reason": "Prospect asking whether doing the course leads to a job.",
+        "name": "Ishtiaq",
+        "role": null,
+        "company": null,
+        "team_size": null,
+        "phone_in_message": null,
+        "interest": "unclear",
+        "interest_detail": "Asks if the course leads to a job",
+        "language": "banglish",
+        "status": "New",
+        "priority": "low",
+        "priority_reason": "Very vague pre-purchase question with no program or buying signal.",
+        "follow_up_by": null,
+        "flags": [],
+        "summary": "Facebook commenter asks whether doing the course will help him get a job, without naming a program.",
+        "missing_info": [
+          "which program"
+        ],
+        "low_confidence_fields": [
+          "interest"
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 3758,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "support",
+        "message_type_reason": "Existing customer says her bKash payment was not confirmed.",
+        "name": "Farzana Rahman",
+        "role": null,
+        "company": null,
+        "team_size": null,
+        "phone_in_message": null,
+        "interest": "unclear",
+        "interest_detail": "Payment made on 25th via bKash, no confirmation received",
+        "language": "bangla",
+        "status": "Paid",
+        "priority": "high",
+        "priority_reason": "Money paid but payment is unconfirmed.",
+        "follow_up_by": null,
+        "flags": [
+          "payment_unverified"
+        ],
+        "summary": "Farzana Rahman paid by bKash on the 25th and has received no confirmation.",
+        "missing_info": [
+          "which program she paid for",
+          "bKash transaction ID"
+        ],
+        "low_confidence_fields": [
+          "interest"
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 2706,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "lead",
+        "message_type_reason": "Prospective student asking about the refund policy before paying.",
+        "name": "Anika Chowdhury",
+        "role": null,
+        "company": null,
+        "team_size": null,
+        "phone_in_message": null,
+        "interest": "unclear",
+        "interest_detail": "Refund policy if unable to attend after payment",
+        "language": "english",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Normal pre-purchase policy question from a prospect.",
+        "follow_up_by": null,
+        "flags": [],
+        "summary": "Anika asks whether BIAI offers refunds if she cannot attend after paying.",
+        "missing_info": [
+          "which program"
+        ],
+        "low_confidence_fields": []
+      }
+    },
+    {
+      "id": 9,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 3091,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "lead",
+        "message_type_reason": "Prospect asking where the offline classes are held.",
+        "name": "Jahid",
+        "role": null,
+        "company": null,
+        "team_size": null,
+        "phone_in_message": null,
+        "interest": "unclear",
+        "interest_detail": "Asking location of offline classes, mentions Mirpur",
+        "language": "banglish",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Normal pre-purchase question about class location.",
+        "follow_up_by": null,
+        "flags": [],
+        "summary": "Jahid asks where the offline classes take place and whether it is in Mirpur.",
+        "missing_info": [
+          "which program",
+          "phone number"
+        ],
+        "low_confidence_fields": []
+      }
+    },
+    {
+      "id": 10,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 3588,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "lead",
+        "message_type_reason": "Bank HR contact asking for a training quote for employees.",
+        "name": "Kamrul Islam",
+        "role": "HR",
+        "company": "a bank in Motijheel",
+        "team_size": 120,
+        "phone_in_message": null,
+        "interest": "corporate",
+        "interest_detail": "Quote for training 120 employees, online or onsite",
+        "language": "english",
+        "status": "New",
+        "priority": "high",
+        "priority_reason": "Corporate deal with a stated team of 120 employees requesting a quote.",
+        "follow_up_by": null,
+        "flags": [
+          "group_or_bulk"
+        ],
+        "summary": "HR contact from a Motijheel bank wants a quote for training 120 employees, online or onsite.",
+        "missing_info": [
+          "preferred training dates"
+        ],
+        "low_confidence_fields": []
+      }
+    },
+    {
+      "id": 11,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 2069,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "spam",
+        "message_type_reason": "Unsolicited crypto money-making ad with a suspicious link.",
+        "name": null,
+        "role": null,
+        "company": null,
+        "team_size": null,
+        "phone_in_message": null,
+        "interest": "not_applicable",
+        "interest_detail": null,
+        "language": "english",
+        "status": null,
+        "priority": "low",
+        "priority_reason": "Spam promotion, no real customer.",
+        "follow_up_by": null,
+        "flags": [],
+        "summary": "Public comment spam advertising crypto signals with a shortened link.",
+        "missing_info": [],
+        "low_confidence_fields": []
+      }
+    },
+    {
+      "id": 12,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 1825,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "lead",
+        "message_type_reason": "Prospect asking for the bootcamp price.",
+        "name": "Rafi Ahmed",
+        "role": null,
+        "company": null,
+        "team_size": null,
+        "phone_in_message": null,
+        "interest": "bootcamp",
+        "interest_detail": "Asking bootcamp price",
+        "language": "banglish",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Normal pre-purchase pricing question.",
+        "follow_up_by": null,
+        "flags": [],
+        "summary": "Rafi asks on WhatsApp for the bootcamp price.",
+        "missing_info": [],
+        "low_confidence_fields": []
+      }
+    },
+    {
+      "id": 13,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 2284,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "lead",
+        "message_type_reason": "School student asking whether she can join a free masterclass.",
+        "name": "Mim",
+        "role": null,
+        "company": null,
+        "team_size": null,
+        "phone_in_message": null,
+        "interest": "other",
+        "interest_detail": "Wants to join a free masterclass",
+        "language": "bangla",
+        "status": "New",
+        "priority": "low",
+        "priority_reason": "Minor asking about a free event, no buying signal.",
+        "follow_up_by": null,
+        "flags": [
+          "minor"
+        ],
+        "summary": "A class 9 student asks if she can join the free masterclass.",
+        "missing_info": [],
+        "low_confidence_fields": []
+      }
+    },
+    {
+      "id": 14,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 2352,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "lead",
+        "message_type_reason": "Prospect asking whether the fellowship fits her background before buying.",
+        "name": "Shirin Sultana",
+        "role": "marketing manager",
+        "company": null,
+        "team_size": null,
+        "phone_in_message": null,
+        "interest": "fellowship",
+        "interest_detail": "Whether fellowship suits a non-technical marketer with no coding",
+        "language": "english",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Normal pre-purchase eligibility question about the fellowship.",
+        "follow_up_by": null,
+        "flags": [],
+        "summary": "A marketing manager with 8 years' experience and no coding asks if the fellowship suits her.",
+        "missing_info": [],
+        "low_confidence_fields": [
+          "role"
+        ]
+      }
+    },
+    {
+      "id": 15,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 2586,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "lead",
+        "message_type_reason": "Prospect asking what the add-on is and what lifetime access means before buying.",
+        "name": "Tanvir",
+        "role": null,
+        "company": null,
+        "team_size": null,
+        "phone_in_message": null,
+        "interest": "unclear",
+        "interest_detail": "Asks what add-on and lifetime access mean",
+        "language": "banglish",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Normal pre-purchase clarification question.",
+        "follow_up_by": null,
+        "flags": [],
+        "summary": "Tanvir asks what the add-on is and what lifetime access means.",
+        "missing_info": [
+          "which program"
+        ],
+        "low_confidence_fields": [
+          "interest"
+        ]
+      }
+    },
+    {
+      "id": 16,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 2768,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "complaint",
+        "message_type_reason": "Existing customer is upset and wants to cancel his enrolment and get a refund.",
+        "name": "Habibur Rahman",
+        "role": null,
+        "company": null,
+        "team_size": null,
+        "phone_in_message": null,
+        "interest": "unclear",
+        "interest_detail": "Cancel enrolment and request refund; program not stated",
+        "language": "english",
+        "status": "Paid",
+        "priority": "urgent",
+        "priority_reason": "Refund request with a same-day deadline and a threat to post publicly.",
+        "follow_up_by": "2026-10-27T17:00",
+        "flags": [
+          "refund_request",
+          "public_complaint_risk"
+        ],
+        "summary": "Upset caller wants to cancel his enrolment and get his money back, threatening a Facebook post if not resolved today.",
+        "missing_info": [
+          "which program he enrolled in",
+          "reason for cancellation",
+          "payment or transaction details"
+        ],
+        "low_confidence_fields": [
+          "interest"
+        ]
+      }
+    },
+    {
+      "id": 17,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 3153,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "lead",
+        "message_type_reason": "Prospect asks whether the course certificate is government approved.",
+        "name": "Nowshin",
+        "role": null,
+        "company": null,
+        "team_size": null,
+        "phone_in_message": null,
+        "interest": "unclear",
+        "interest_detail": "Whether course certificate is government approved",
+        "language": "banglish",
+        "status": "New",
+        "priority": "medium",
+        "priority_reason": "Normal pre-purchase question about certificate accreditation.",
+        "follow_up_by": null,
+        "flags": [],
+        "summary": "Nowshin asks whether BIAI's course certificate is government approved.",
+        "missing_info": [
+          "which program"
+        ],
+        "low_confidence_fields": []
+      }
+    },
+    {
+      "id": 18,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 10395,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "lead",
+        "message_type_reason": "Company owner asking about a group discount for employee training.",
+        "name": "Rezaul Karim",
+        "role": "owner",
+        "company": "small garment factory",
+        "team_size": 15,
+        "phone_in_message": null,
+        "interest": "corporate",
+        "interest_detail": "Group discount for training 15 company employees",
+        "language": "bangla",
+        "status": "New",
+        "priority": "high",
+        "priority_reason": "Corporate owner with a team-size enquiry and discount request.",
+        "follow_up_by": null,
+        "flags": [
+          "group_or_bulk"
+        ],
+        "summary": "Garment factory owner asks whether BIAI offers a group discount for training 15 employees.",
+        "missing_info": [
+          "training topic"
+        ],
+        "low_confidence_fields": []
+      }
+    },
+    {
+      "id": 19,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 2098,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "lead",
+        "message_type_reason": "Prospect asking about paying the fellowship fee in instalments.",
+        "name": "Samira",
+        "role": null,
+        "company": null,
+        "team_size": null,
+        "phone_in_message": null,
+        "interest": "fellowship",
+        "interest_detail": "Asking if fellowship fee can be paid in two instalments",
+        "language": "english",
+        "status": "New",
+        "priority": "high",
+        "priority_reason": "Clear buying signal about payment terms for the fellowship.",
+        "follow_up_by": null,
+        "flags": [],
+        "summary": "Samira asks whether she can pay the fellowship fee in two instalments.",
+        "missing_info": [],
+        "low_confidence_fields": []
+      }
+    },
+    {
+      "id": 20,
+      "model_used": "deepseek:deepseek-flash",
+      "latency_ms": 1768,
+      "first_try_valid": true,
+      "errors": [],
+      "extraction": {
+        "message_type": "irrelevant",
+        "message_type_reason": "Sender is a job seeker asking about internships, not a customer enquiry.",
+        "name": "Arif Hossain",
+        "role": null,
+        "company": null,
+        "team_size": null,
+        "phone_in_message": null,
+        "interest": "not_applicable",
+        "interest_detail": null,
+        "language": "english",
+        "status": null,
+        "priority": "low",
+        "priority_reason": "Job seeker, not a potential customer.",
+        "follow_up_by": null,
+        "flags": [],
+        "summary": "Arif Hossain asks where to apply for an AI internship position.",
+        "missing_info": [],
+        "low_confidence_fields": []
+      }
+    }
+  ]
+}

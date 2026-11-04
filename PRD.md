@@ -357,9 +357,9 @@ Work in order. At the end of each milestone: tick the boxes, run the checks list
 
 ### M1: AI core + extraction eval (3h)
 - [x] `ai/client.py`: DeepSeek → Gemini fallback, JSON mode, Pydantic validation, one retry, timeout, `model_used` + `latency_ms`
-- [ ] `eval/run_eval.py` as in §10.1, writes `ai_results.json` and `eval/report.md`
-- [ ] Iterate on `prompts.py` until targets in §10.1 are met (max 2–3 rounds)
-- [ ] Decide Bangla routing from the numbers
+- [x] `eval/run_eval.py` as in §10.1, writes `ai_results.json` and `eval/report.md`
+- [x] Iterate on `prompts.py` until targets in §10.1 are met (max 2–3 rounds)
+- [x] Decide Bangla routing from the numbers
 - **Done when:** report shows targets met (or honest numbers with reasons), and `ai_results.json` has 20 valid entries.
 
 ### M2: Deploy smoke test (1h)

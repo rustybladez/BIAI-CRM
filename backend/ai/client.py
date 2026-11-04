@@ -42,8 +42,8 @@ def _provider(name: str, default_base: str, default_model: str) -> Provider | No
 def configured_providers() -> list[Provider]:
     """Providers with an API key, in routing order (DeepSeek first)."""
     found = [
-        _provider("deepseek", "https://api.deepseek.com", "deepseek-chat"),
-        _provider("gemini", "https://generativelanguage.googleapis.com/v1beta/openai/", "gemini-2.5-flash"),
+        _provider("deepseek", "https://api.deepseek.com", "deepseek-flash"),
+        _provider("gemini", "https://generativelanguage.googleapis.com/v1beta/openai/", "gemini-3.5-flash"),
     ]
     return [p for p in found if p is not None]
 

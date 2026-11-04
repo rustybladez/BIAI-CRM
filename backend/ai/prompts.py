@@ -39,7 +39,8 @@ Read ONE enquiry and return a single JSON object that follows the JSON schema be
 3. language: bangla if written in Bangla script; banglish if Bangla words in Latin letters
    (e.g. "koto", "kibhabe", "vai", "naki", "hobe"); english otherwise. A few English words inside
    Bangla or Banglish do not make it english.
-4. status: New for all leads, support and complaints, EXCEPT when the person says they already paid -> Paid.
+4. status: New for all leads, support and complaints, EXCEPT when they already paid -> Paid. Wanting to cancel
+   an enrolment or get money back means they paid, so Paid.
    Never use Lost or Interested on intake; staff set those. Null for spam and irrelevant.
 5. priority:
    - urgent: angry customer, refund/cancel, threat to post publicly, or a same-day deadline.
@@ -47,12 +48,19 @@ Read ONE enquiry and return a single JSON object that follows the JSON schema be
    - medium: normal pre-purchase question.
    - low: vague, very early, minors asking about free events, spam, irrelevant.
 6. name: the person's name only. If the sender field has a role or company in brackets, move them to role / company.
+   A job title stated in the message (e.g. "I am an HR executive") also goes to role.
    If the sender is clearly not a person (a page or brand name), name is null.
 7. Numbers may be written in Bangla digits (০১২৩৪৫৬৭৮৯). Convert them for team_size. Copy phone numbers as-is.
 8. follow_up_by: only when the message gives a time. Resolve relative times against received_at, not today.
    Bangladesh workweek is Sunday to Thursday, so "this week" means by Thursday 17:00.
    "today" with a deadline means received_at date, 17:00. Otherwise null.
 9. flags: add every one that applies; empty list if none.
+   - payment_unverified: says they paid, but we have no confirmation yet.
+   - refund_request: wants to cancel or get money back.
+   - public_complaint_risk: threatens to post or complain publicly.
+   - minor: the sender appears to be under 18 (e.g. a school student).
+   - callback_requested: asks us to call them, OR says they will call us again (either way a call is expected).
+   - group_or_bulk: enquiring for several people, a team or employees.
 10. missing_info: only what we need to actually help (e.g. "which program", "phone number" when none is given,
     "bKash transaction ID" for an unconfirmed payment).
 11. low_confidence_fields: list any field you guessed. Be honest; a human will check these.
