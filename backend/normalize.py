@@ -81,6 +81,18 @@ def find_duplicate(session: Session, phone: str | None) -> Contact | None:
     return session.exec(select(Contact).where(Contact.phone == phone)).first()
 
 
+def no_reply_since_last_message(contact: Contact) -> bool:
+    return contact.last_outbound_at is None or (
+        contact.last_inbound_at is not None and contact.last_outbound_at < contact.last_inbound_at
+    )
+
+
+def would_escalate(contact: Contact, ex: ExtractedEnquiry) -> bool:
+    """Rule 4: a pipeline contact writes again and we have not replied since their previous message."""
+    in_pipeline = contact.status is not None or intake_status(ex) is not None
+    return in_pipeline and no_reply_since_last_message(contact)
+
+
 def ingest(
     session: Session,
     *,
@@ -121,10 +133,7 @@ def ingest(
             missing_info=list(ex.missing_info),
         )
     else:
-        # Rule 4: wrote again and we have not replied since their previous message.
-        no_reply = contact.last_outbound_at is None or (
-            contact.last_inbound_at is not None and contact.last_outbound_at < contact.last_inbound_at
-        )
+        escalate = would_escalate(contact, ex)
         for f in ("name", "role", "company", "team_size"):
             if getattr(contact, f) is None:
                 setattr(contact, f, getattr(ex, f))
@@ -145,7 +154,7 @@ def ingest(
             contact.priority_reason = ex.priority_reason
         contact.priority = new_priority
         _add_flags(contact, *(f.value for f in ex.flags), DUPLICATE_MERGED)
-        if no_reply and contact.status is not None:
+        if escalate:
             contact.priority = Priority.urgent.value
             contact.priority_reason = "Asked again, no reply yet."
             _add_flags(contact, REPEAT_NO_REPLY)

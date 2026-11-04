@@ -375,8 +375,8 @@ Work in order. At the end of each milestone: tick the boxes, run the checks list
 - **Done when:** fresh start → 19 contacts, Rafi merged and `urgent`, 6 missing phones, spam and job seeker out of the pipeline.
 
 ### M4: API (2h)
-- [ ] All endpoints in §9 except reply, summary and export
-- [ ] Intake analyse/save with duplicate preview
+- [x] All endpoints in §9 except reply, summary and export
+- [x] Intake analyse/save with duplicate preview
 - **Done when:** every endpoint works from `/docs`; intake of an invented Banglish message creates a correct contact.
 
 ### M5: Replies + FAQ (2.5h)

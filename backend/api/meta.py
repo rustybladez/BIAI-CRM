@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Literal, get_args
 
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -9,7 +10,8 @@ from backend.normalize import SYSTEM_FLAGS
 
 router = APIRouter(prefix="/api", tags=["meta"])
 
-CHANNELS = ["WhatsApp", "Facebook Messenger", "Facebook comment", "Website form", "Phone call note"]
+Channel = Literal["WhatsApp", "Facebook Messenger", "Facebook comment", "Website form", "Phone call note"]
+CHANNELS: list[str] = list(get_args(Channel))
 
 
 class Meta(BaseModel):
