@@ -386,10 +386,10 @@ Work in order. At the end of each milestone: tick the boxes, run the checks list
 - **Done when:** checks in §10.2 pass; #7 asks for the bKash transaction ID; #16 is a call script; #11 has no reply; #17 does not claim government approval.
 
 ### M6: Frontend (6h)
-- [ ] S1 Pipeline board with drag-and-drop, badges, filters, Not-a-lead tray
-- [ ] S3 Intake with review step, merge preview, 3 invented sample buttons
-- [ ] S2 Detail with timeline, low-confidence highlights, reply panel + language switch, copy, mark as sent
-- [ ] Header with demo clock and urgent/overdue counts
+- [x] S1 Pipeline board with drag-and-drop, badges, filters, Not-a-lead tray
+- [x] S3 Intake with review step, merge preview, 3 invented sample buttons
+- [x] S2 Detail with timeline, low-confidence highlights, reply panel + language switch, copy, mark as sent
+- [x] Header with demo clock and urgent/overdue counts
 - **Done when:** the full demo script (§12) runs in the browser on the local build with no console errors.
 
 ### M7: Extras (2h)

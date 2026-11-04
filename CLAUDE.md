@@ -71,6 +71,7 @@ eval/run_eval.py     scores the AI against gold.json, prints a table
   (first time on a new machine: `uv run fastapi login`, then `uv run fastapi cloud link`). The filesystem is wiped on
   every redeploy, so the DB must reseed on boot.
 - Checks: `uv run ruff check backend tests eval && uv run pytest -q`; frontend `npm run lint && npm run build`
+- Browser demo check (PRD §12): `BASE=http://localhost:8000 node tests/e2e/demo.js` (live AI for the paste step)
 - `backend/static/` (the built frontend) is committed so a fresh clone and FastAPI Cloud can serve it without Node.
 
 ## Skills

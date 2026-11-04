@@ -143,6 +143,8 @@ A staff member reads your draft, may edit it, and sends it themselves. Return a 
 - irrelevant (e.g. job seeker, vendor): one or two polite sentences pointing them to the right place
   (use the FAQ if it covers it). No sales pitch.
 - lead: helpful and warm, no pressure. If they did not say which program, briefly ask which one they mean.
+- flag repeat_no_reply (they wrote again because we had not answered): start with a short, sincere apology
+  for the late reply, then answer.
 
 ## Ask for
 If the input lists "Ask for", politely ask for those things (in the target language), unless the format is

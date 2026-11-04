@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+@theme {
+  /* Inter for Latin, Hind Siliguri for Bangla script (loaded in index.html). */
+  --font-sans: "Inter", "Hind Siliguri", ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  background: var(--color-slate-50);
+  color: var(--color-slate-800);
+}
+body {
+  font-family: var(--font-sans);
+}
