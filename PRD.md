@@ -411,8 +411,8 @@ Work in order. At the end of each milestone: tick the boxes, run the checks list
 - **Done when:** the public URL passes the full demo script twice in a row.
 
 ### M10: Deliverables (3h; owner-led, Claude Code assists)
-- [ ] `NOTE.md` (§13.2), max half a page
-- [ ] `README.md`: what it is, live link, how to run locally, how to run eval, project structure
+- [x] `NOTE.md` (§13.2), max half a page
+- [x] `README.md`: what it is, live link, how to run locally, how to run eval, project structure
 - [ ] Loom script finalised (§12); 2 practice runs; record; check it is ≤ 5:00
 - [ ] Submission: Loom link, live link, repo link, `NOTE.md`
 - **Done when:** all four items are in the submission email draft.
