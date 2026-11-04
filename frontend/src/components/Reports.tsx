@@ -16,16 +16,19 @@ function Tile({ label, value, tone }: { label: string; value: number | string; t
 }
 
 function Breakdown({ title, data, label }: { title: string; data: Record<string, number>; label?: (k: string) => string }) {
-  const total = Object.values(data).reduce((a, b) => a + b, 0) || 1
+  const max = Math.max(1, ...Object.values(data))
   return (
-    <div>
-      <div className="mb-1 text-xs font-medium text-slate-500">{title}</div>
-      <ul className="space-y-1">
+    <div className="min-w-0">
+      <div className="mb-1.5 text-xs font-medium text-slate-500">{title}</div>
+      {/* Label column sizes to the longest label, so labels are never cut off; bars scale to the largest value. */}
+      <ul className="grid grid-cols-[max-content_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 text-sm">
         {Object.entries(data).map(([k, v]) => (
-          <li key={k} className="flex items-center gap-2 text-sm">
-            <span className="w-28 shrink-0 truncate text-slate-700">{label ? label(k) : k}</span>
-            <span className="h-2 rounded-full bg-indigo-400" style={{ width: `${Math.max(4, (v / total) * 100)}%` }} aria-hidden />
-            <span className="tabular-nums text-slate-600">{v}</span>
+          <li key={k} className="contents">
+            <span className="whitespace-nowrap text-slate-700">{label ? label(k) : k}</span>
+            <span className="h-2 rounded-full bg-slate-100" aria-hidden>
+              <span className="block h-2 rounded-full bg-indigo-400" style={{ width: v ? `${Math.max(3, (v / max) * 100)}%` : 0 }} />
+            </span>
+            <span className="text-right tabular-nums text-slate-600">{v}</span>
           </li>
         ))}
       </ul>
