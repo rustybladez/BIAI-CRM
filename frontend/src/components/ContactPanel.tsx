@@ -482,12 +482,13 @@ export function ContactPanel({
         )}
 
         {contact && (
-          <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="flex min-h-0 flex-col bg-slate-50 lg:border-r lg:border-slate-200">
-              <div className="min-h-0 flex-1 overflow-y-auto">
+          // Phones: one scrolling column (conversation, reply, details). Desktop: two columns that scroll on their own.
+          <div className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_360px] lg:overflow-hidden">
+            <div className="flex flex-col bg-slate-50 lg:min-h-0 lg:border-r lg:border-slate-200">
+              <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
                 <Thread contact={contact} />
               </div>
-              <div className="max-h-[56%] shrink-0 overflow-y-auto px-4 pb-3">
+              <div className="shrink-0 px-3 pb-3 lg:max-h-[56%] lg:overflow-y-auto lg:px-4">
                 <ReplyPanel
                   key={`${contact.id}-${contact.enquiries.at(-1)?.id}`}
                   contact={contact}
@@ -499,7 +500,7 @@ export function ContactPanel({
                 />
               </div>
             </div>
-            <div className="min-h-0 overflow-y-auto">
+            <div className="lg:min-h-0 lg:overflow-y-auto">
               <Properties contact={contact} meta={meta} now={now} save={save} />
             </div>
           </div>

@@ -81,7 +81,7 @@ function WeeklySummary({ onOpen }: { onOpen: (id: number) => void }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
         <Tile label="messages this week" value={st.this_week.messages_received} />
         <Tile label="new contacts" value={st.this_week.new_contacts} />
         <Tile label="waiting for our reply" value={st.waiting_for_our_reply} />

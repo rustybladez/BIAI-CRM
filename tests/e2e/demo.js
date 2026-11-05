@@ -238,6 +238,47 @@ require('fs').mkdirSync(S, { recursive: true });
     if (!h.includes('7 people are overdue and 2 are urgent')) throw new Error(h);
   });
 
+  // ---- Phone width (390 px): compact top bar, slide-over menu, nothing wider than the screen ----
+  const m = await (await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage();
+  m.on('pageerror', (e) => errs.push('mobile pageerror: ' + e.message));
+  const mstep = async (name, fn) => {
+    try {
+      await fn();
+      console.log('OK  ', name);
+    } catch (e) {
+      failed++;
+      console.log('FAIL', name, e.message.split('\n')[0]);
+      await m.screenshot({ path: S + 'fail-mobile.png' });
+    }
+  };
+  const fits = async () => m.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
+  await mstep('11 phone: Today fits, KPI cards two per row, menu navigates, contact reply reachable', async () => {
+    await m.goto(BASE + '/#today');
+    await m.getByTestId('today-headline').waitFor();
+    if (!(await fits())) throw new Error('Today wider than the screen');
+    if (await m.getByRole('navigation', { name: 'Main' }).isVisible()) throw new Error('sidebar visible on phone');
+    const a = await m.getByTestId('kpi-waiting').boundingBox();
+    const u = await m.getByTestId('kpi-urgent').boundingBox();
+    if (Math.abs(a.y - u.y) > 2 || u.x <= a.x) throw new Error('KPI cards not side by side');
+    const q = await m.getByRole('region', { name: 'Needs you now' }).boundingBox();
+    if (q.x + q.width > 391) throw new Error('queue card wider than the screen');
+    await m.screenshot({ path: S + '11-phone-today.png' });
+    await m.getByRole('button', { name: 'Open menu' }).click();
+    const menu = m.getByRole('dialog', { name: 'Menu' });
+    await menu.getByRole('button', { name: /Pipeline/ }).click();
+    await menu.waitFor({ state: 'detached' });
+    await m.getByTestId('column-New').waitFor();
+    if (!(await fits())) throw new Error('Pipeline wider than the screen');
+    await m.goto(BASE + '/#reports');
+    await m.getByTestId('summary-overview').or(m.getByRole('button', { name: 'Generate weekly summary' })).first().waitFor();
+    if (!(await fits())) throw new Error('Reports wider than the screen');
+    await m.goto(BASE + '/#today');
+    await m.getByTestId('queue').getByText('Rafi Ahmed').click();
+    const d = m.getByRole('dialog', { name: 'Contact details' });
+    await d.getByRole('button', { name: 'Mark as sent' }).scrollIntoViewIfNeeded();
+    if (!(await d.getByRole('button', { name: 'Mark as sent' }).isVisible())) throw new Error('Mark as sent not reachable');
+  });
+
   console.log('console errors:', errs.length ? errs : 'none');
   await b.close();
   process.exit(failed || errs.length ? 1 : 0);

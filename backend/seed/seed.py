@@ -3,11 +3,11 @@
 import json
 from pathlib import Path
 
-from sqlmodel import Session, SQLModel, func, select
+from sqlmodel import Session, delete, func, select
 
 from backend.ai.schema import ExtractedEnquiry
 from backend.config import parse_local
-from backend.db import Contact, Enquiry, ReplyDraft
+from backend.db import Activity, Contact, Enquiry, ReplyDraft
 from backend.normalize import ingest
 from backend.seed.load import read_enquiries
 
@@ -68,9 +68,11 @@ def seed(session: Session, with_replies: bool = True) -> int:
             latency_ms=res.get("latency_ms"),
             seed_id=row.id,
         )
-    session.commit()
     if with_replies:
-        load_seed_replies(session)
+        session.flush()
+        load_seed_replies(session)  # commits contacts, messages and drafts together
+    else:
+        session.commit()
     return len(rows)
 
 
@@ -82,10 +84,8 @@ def seed_if_empty(session: Session) -> bool:
 
 
 def reset(session: Session) -> int:
-    """Drop everything and reseed (demo reset)."""
-    engine = session.get_bind()
-    session.close()
-    SQLModel.metadata.drop_all(engine)
-    SQLModel.metadata.create_all(engine)
-    with Session(engine) as fresh:
-        return seed(fresh)
+    """Empty the tables and reseed (demo reset) in one transaction. Tables are not dropped, so a request
+    that arrives during the reset sees the old or the new data, never a missing table."""
+    for model in (ReplyDraft, Activity, Enquiry, Contact):  # children first (foreign keys)
+        session.exec(delete(model))
+    return seed(session)

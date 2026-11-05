@@ -118,3 +118,10 @@ again, no reply yet" and the "Asked again" banner although we had just replied. 
 `repeat_no_reply` flag and restores the highest AI priority across the contact's messages with that message's
 reason (Rafi: high, from #1); `duplicate_merged` stays. If they write twice before our next reply, rule 4
 escalates again. Tests cover the round trip; the browser test checks the banner disappears and HIGH is shown.
+
+**Phone layout (2026-11-05):** below the md breakpoint the sidebar is hidden; a compact top bar holds the logo, a
+menu button (opens the sidebar as a slide-over, with the overdue count on it) and New enquiry. Today: KPI cards two
+per row (the fifth spans the row), smaller headline, queue rows with the priority inline. The contact panel scrolls
+as one column on phones so the reply buttons are always reachable. Checked at 390 px: no screen is wider than the
+viewport. Found while testing: Reset dropped and recreated the tables, so a request arriving mid-reset failed with
+"no such table"; reset now empties and refills the tables in one transaction.

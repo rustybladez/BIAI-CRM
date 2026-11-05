@@ -1,5 +1,5 @@
 import * as Popover from '@radix-ui/react-popover'
-import { BarChart3, Clock, KanbanSquare, LayoutDashboard, MessageSquarePlus, RotateCcw, Search } from 'lucide-react'
+import { BarChart3, Clock, KanbanSquare, LayoutDashboard, Menu, MessageSquarePlus, RotateCcw, Search, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { api, type ContactSummary } from '../api'
 import { CHANNEL, demoNowIso, displayName, formatWhen } from '../lib/labels'
@@ -22,6 +22,8 @@ export function Sidebar({
   demoNow,
   onSetClock,
   onReset,
+  className = 'flex',
+  onClose,
 }: {
   view: View
   onView: (v: View) => void
@@ -30,14 +32,28 @@ export function Sidebar({
   demoNow: string
   onSetClock: (v: string) => Promise<void>
   onReset: () => Promise<void>
+  className?: string
+  onClose?: () => void
 }) {
   return (
-    <aside className="flex w-56 shrink-0 flex-col gap-1 border-r border-slate-200 bg-white px-3 py-4">
+    <aside className={cx('w-56 shrink-0 flex-col gap-1 overflow-y-auto border-r border-slate-200 bg-white px-3 py-4', className)}>
       <div className="flex items-center gap-2 px-2 pb-4">
-        <span className="grid size-7 place-items-center rounded-lg bg-indigo-600 text-sm font-bold text-white">B</span>
-        <span className="text-[15px] font-bold tracking-tight text-slate-900">BIAI CRM</span>
+        <Logo />
+        {onClose && (
+          <button onClick={onClose} className="ml-auto rounded-lg p-1.5 text-slate-500 hover:bg-slate-100" aria-label="Close menu">
+            <X className="size-5" />
+          </button>
+        )}
       </div>
-      <Button variant="primary" className="mb-3 w-full py-2" onClick={onNew} title="Paste a message (shortcut: n)">
+      <Button
+        variant="primary"
+        className="mb-3 w-full py-2"
+        onClick={() => {
+          onNew()
+          onClose?.()
+        }}
+        title="Paste a message (shortcut: n)"
+      >
         <MessageSquarePlus className="size-4" /> New enquiry
       </Button>
       <nav className="flex flex-col gap-0.5" aria-label="Main">
@@ -46,7 +62,10 @@ export function Sidebar({
           return (
             <button
               key={v}
-              onClick={() => onView(v)}
+              onClick={() => {
+                onView(v)
+                onClose?.()
+              }}
               aria-current={view === v ? 'page' : undefined}
               className={cx(
                 'flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition',
@@ -167,12 +186,58 @@ function DemoBox({
   )
 }
 
+function Logo() {
+  return (
+    <span className="flex items-center gap-2">
+      <span className="grid size-7 place-items-center rounded-lg bg-indigo-600 text-sm font-bold text-white">B</span>
+      <span className="text-[15px] font-bold tracking-tight text-slate-900">BIAI CRM</span>
+    </span>
+  )
+}
+
+/** Phone widths (below md): logo, menu button and New enquiry instead of the sidebar. */
+export function MobileBar({ onMenu, onNew, overdue }: { onMenu: () => void; onNew: () => void; overdue: number }) {
+  return (
+    <div className="flex h-14 shrink-0 items-center gap-2 border-b border-slate-200 bg-white px-3 md:hidden">
+      <button onClick={onMenu} className="relative rounded-lg p-2 text-slate-700 hover:bg-slate-100" aria-label="Open menu">
+        <Menu className="size-5" />
+        {overdue > 0 && (
+          <span className="absolute -right-0.5 -top-0.5 rounded-full bg-red-600 px-1.5 text-[10px] font-semibold text-white" aria-label={`${overdue} overdue`}>
+            {overdue}
+          </span>
+        )}
+      </button>
+      <Logo />
+      <Button variant="primary" className="ml-auto" onClick={onNew}>
+        <MessageSquarePlus className="size-4" /> New enquiry
+      </Button>
+    </div>
+  )
+}
+
+/** The sidebar as a slide-over from the left, for phone widths. */
+export function MobileMenu({ open, onClose, children }: { open: boolean; onClose: () => void; children: ReactNode }) {
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-50 flex md:hidden" role="dialog" aria-modal="true" aria-label="Menu">
+      <div className="absolute inset-0 bg-slate-900/40" onClick={onClose} />
+      <div className="relative h-full w-72 max-w-[85vw] shadow-2xl">{children}</div>
+    </div>
+  )
+}
+
 export function TopBar({ title, children, onOpen }: { title: string; children?: ReactNode; onOpen: (id: number) => void }) {
   return (
-    <header className="flex h-14 shrink-0 items-center gap-4 border-b border-slate-200 bg-white px-6">
-      <h1 className="text-lg font-bold tracking-tight text-slate-900">{title}</h1>
+    <header className="flex h-14 shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 md:gap-4 md:px-6">
+      <h1 className="shrink-0 text-base font-bold tracking-tight text-slate-900 md:text-lg">{title}</h1>
       {children}
-      <div className="ml-auto">
+      <div className="ml-auto min-w-0 flex-1 md:flex-none">
         <GlobalSearch onOpen={onOpen} />
       </div>
     </header>
@@ -217,7 +282,7 @@ function GlobalSearch({ onOpen }: { onOpen: (id: number) => void }) {
   return (
     <Popover.Root open={open && shown !== null} onOpenChange={setOpen}>
       <Popover.Anchor asChild>
-        <div className="relative">
+        <div className="relative w-full">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden />
           <input
             ref={input}
@@ -240,7 +305,7 @@ function GlobalSearch({ onOpen }: { onOpen: (id: number) => void }) {
             }}
             placeholder="Search name, phone or message"
             aria-label="Search contacts"
-            className="w-80 rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-8 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-8 text-sm md:w-80 text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200"
           />
           <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded border border-slate-200 bg-white px-1 text-[10px] text-slate-400">/</kbd>
         </div>
@@ -250,7 +315,7 @@ function GlobalSearch({ onOpen }: { onOpen: (id: number) => void }) {
           align="end"
           sideOffset={6}
           onOpenAutoFocus={(e) => e.preventDefault()}
-          className="z-50 w-[26rem] rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl"
+          className="z-50 w-[min(26rem,calc(100vw-1rem))] rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl"
         >
           {shown && shown.length === 0 && <p className="p-3 text-sm text-slate-500">No contact matches "{q.trim()}".</p>}
           <ul className="max-h-96 overflow-y-auto">

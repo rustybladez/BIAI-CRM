@@ -5,7 +5,7 @@ import { ContactPanel } from './components/ContactPanel'
 import { IntakeModal } from './components/IntakeModal'
 import { Pipeline } from './components/Pipeline'
 import { Reports } from './components/Reports'
-import { Sidebar, TopBar } from './components/Shell'
+import { MobileBar, MobileMenu, Sidebar, TopBar } from './components/Shell'
 import { Today, type GoTo } from './components/Today'
 import { ErrorNote, Spinner } from './components/ui'
 import { NO_FILTERS, loadSortMode, saveSortMode, sortContacts, type Filters, type SortMode } from './lib/filters'
@@ -25,6 +25,8 @@ export default function App() {
   const [pasting, setPasting] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const closeMenu = useCallback(() => setMenuOpen(false), [])
 
   const setRoute = useCallback((r: Route) => {
     setRouteState(r)
@@ -120,33 +122,43 @@ export default function App() {
     )
   }
 
+  const sidebar = (className: string, onClose?: () => void) => (
+    <Sidebar
+      className={className}
+      onClose={onClose}
+      view={route.view}
+      onView={(v) => setRoute({ view: v, contactId: null })}
+      counts={{ overdue: pipeline.filter((c) => c.overdue).length, pipeline: pipeline.length }}
+      onNew={() => setPasting(true)}
+      demoNow={meta.demo_now}
+      onSetClock={async (v) => {
+        try {
+          await api.setClock(v)
+        } catch (e) {
+          setError(e instanceof Error ? e.message : 'Could not set the demo time')
+        }
+        await load()
+      }}
+      onReset={async () => {
+        setRoute({ ...route, contactId: null })
+        await api.reset()
+        setFilters(NO_FILTERS)
+        await load()
+        setToast('Demo data reset: 20 sample enquiries reloaded')
+      }}
+    />
+  )
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
-      <Sidebar
-        view={route.view}
-        onView={(v) => setRoute({ view: v, contactId: null })}
-        counts={{ overdue: pipeline.filter((c) => c.overdue).length, pipeline: pipeline.length }}
-        onNew={() => setPasting(true)}
-        demoNow={meta.demo_now}
-        onSetClock={async (v) => {
-          try {
-            await api.setClock(v)
-          } catch (e) {
-            setError(e instanceof Error ? e.message : 'Could not set the demo time')
-          }
-          await load()
-        }}
-        onReset={async () => {
-          setRoute({ ...route, contactId: null })
-          await api.reset()
-          setFilters(NO_FILTERS)
-          await load()
-          setToast('Demo data reset: 20 sample enquiries reloaded')
-        }}
-      />
+      {sidebar('hidden md:flex')}
+      <MobileMenu open={menuOpen} onClose={closeMenu}>
+        {sidebar('flex h-full w-full', closeMenu)}
+      </MobileMenu>
       <div className="flex min-w-0 flex-1 flex-col">
+        <MobileBar onMenu={() => setMenuOpen(true)} onNew={() => setPasting(true)} overdue={pipeline.filter((c) => c.overdue).length} />
         <TopBar title={TITLES[route.view]} onOpen={(id) => openContact(id)} />
-        <main className={route.view === 'pipeline' ? 'min-h-0 flex-1 overflow-hidden p-5' : 'min-h-0 flex-1 overflow-y-auto p-6'}>
+        <main className={route.view === 'pipeline' ? 'min-h-0 flex-1 overflow-hidden p-3 md:p-5' : 'min-h-0 flex-1 overflow-y-auto p-4 md:p-6'}>
           {error && (
             <div className="mb-3">
               <ErrorNote message={error} onRetry={load} />

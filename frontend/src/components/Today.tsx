@@ -101,7 +101,7 @@ export function Today({
   return (
     <div className="mx-auto flex max-w-[1400px] flex-col gap-5">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900" data-testid="today-headline">
+        <h2 className="text-xl font-bold tracking-tight text-slate-900 md:text-2xl" data-testid="today-headline">
           {headline}
         </h2>
         <p className="text-sm text-slate-500">
@@ -110,7 +110,7 @@ export function Today({
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5 [&>*:last-child]:col-span-2 md:[&>*:last-child]:col-span-1">
         <Kpi
           label="Waiting for reply"
           value={waiting.length}
@@ -146,7 +146,7 @@ export function Today({
         />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] [&>*]:min-w-0">
         <section className="flex min-h-0 flex-col rounded-2xl border border-slate-200 bg-white" aria-label="Needs you now">
           <div className="flex flex-wrap items-center gap-3 px-5 pt-4">
             <h3 className="text-base font-semibold text-slate-900">Needs you now</h3>
@@ -184,10 +184,11 @@ export function Today({
               const call = c.channel === 'Phone call note' || c.flags.includes('callback_requested')
               return (
                 <li key={c.id} className="border-t border-slate-100 first:border-0">
-                  <div className="flex items-center gap-3 rounded-xl px-2 py-2.5 hover:bg-slate-50">
-                    <span className="w-16 shrink-0"><PriorityBadge priority={c.priority} /></span>
+                  <div className="flex items-center gap-2 rounded-xl px-1 py-2.5 hover:bg-slate-50 sm:gap-3 sm:px-2">
+                    <span className="hidden w-16 shrink-0 sm:block"><PriorityBadge priority={c.priority} /></span>
                     <button className="min-w-0 flex-1 text-left" onClick={() => onOpen(c.id, queue.map((q) => q.id))}>
-                      <span className="flex items-center gap-1.5">
+                      <span className="flex flex-wrap items-center gap-1.5">
+                        <span className="sm:hidden"><PriorityBadge priority={c.priority} /></span>
                         <span className="font-semibold text-slate-900">{displayName(c)}</span>
                         {c.overdue && <Chip className="bg-red-50 text-red-700 ring-1 ring-red-200">Overdue</Chip>}
                         {c.flags.includes('repeat_no_reply') && <Chip className="bg-slate-100 text-slate-600">asked again</Chip>}
@@ -199,11 +200,11 @@ export function Today({
                         </span>
                       </span>
                     </button>
-                    <WaitTime contact={c} now={now} className="w-24 shrink-0 text-right text-sm" />
+                    <WaitTime contact={c} now={now} className="shrink-0 text-right text-xs sm:w-24 sm:text-sm" compact />
                     <button
                       onClick={() => onOpen(c.id, queue.map((q) => q.id))}
                       className={cx(
-                        'inline-flex w-20 shrink-0 items-center justify-center gap-1 rounded-lg px-2.5 py-1.5 text-[13px] font-semibold transition',
+                        'inline-flex shrink-0 items-center justify-center gap-1 rounded-lg px-2.5 py-1.5 text-[13px] font-semibold transition sm:w-20',
                         c.priority === 'urgent' ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'text-slate-700 ring-1 ring-slate-200 hover:bg-white hover:ring-indigo-300',
                       )}
                     >

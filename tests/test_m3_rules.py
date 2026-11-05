@@ -250,3 +250,21 @@ def test_mark_sent_leaves_priority_alone_without_escalation(seeded):
     before = (habibur.priority, habibur.priority_reason)
     mark_sent(seeded, habibur, NOW)
     assert (habibur.priority, habibur.priority_reason) == before == ("urgent", habibur.priority_reason)
+
+
+def test_reset_keeps_tables_and_restarts_cleanly(seeded):
+    """Reset empties and refills the tables in one transaction instead of dropping them, so a request
+    arriving mid-reset never hits a missing table."""
+    from sqlalchemy import inspect
+
+    from backend.seed.seed import reset
+
+    mark_sent(seeded, contact_for(seeded, 1), NOW)
+    seeded.commit()
+    assert reset(seeded) == 20
+    assert {"activity", "contact", "enquiry", "replydraft"} <= set(
+        inspect(seeded.get_bind()).get_table_names()
+    )
+    assert len(seeded.exec(select(Contact)).all()) == 19
+    assert not seeded.exec(select(Activity).where(Activity.kind == "reply_sent")).all()
+    assert contact_for(seeded, 1).priority == "urgent"  # back to the seeded state
