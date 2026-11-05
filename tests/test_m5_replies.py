@@ -157,3 +157,25 @@ def test_mark_sent(seeded):
     assert client.get(f"/api/contacts/{habibur}").json()["overdue"]
     d = client.post(f"/api/contacts/{habibur}/reply/sent", json={"body": "Called him back"}).json()
     assert not d["overdue"] and d["status"] == "Paid"
+
+
+def test_draft_warnings_greeting_names_and_call_scripts():
+    salam = ["Assalamualaikum, bootcamp er price koto?"]
+    assert (
+        "answer it"
+        in rp.draft_warnings("Assalamualaikum Rafi! Fee 8,500 taka.", "banglish", "text", salam)[0]
+    )
+    assert rp.draft_warnings("Walaikum assalam Rafi! Fee 8,500 taka.", "banglish", "text", salam) == []
+    assert (
+        rp.draft_warnings("Assalamu alaikum Rafi!", "banglish", "text", ["price koto?"]) == []
+    )  # they did not greet
+    w = rp.draft_warnings("আসসালামু আলাইকুম Sabbir, ধন্যবাদ।", "bangla", "text", ["Live class?"], "Sabbir")
+    assert w == ["Write the name in Bangla script, not Sabbir"]
+    assert rp.draft_warnings("আসসালামু আলাইকুম সাব্বির, ধন্যবাদ।", "bangla", "text", ["Live class?"], "Sabbir") == []
+    script = "Opening: Hi Habibur, thank you for calling BIAI.\n- Ask which program."
+    assert (
+        "calling them back"
+        in rp.draft_warnings(script, "english", "call_script", ["Caller wants a refund."])[0]
+    )
+    ok = "Opening: Hi Habibur, this is Nadia from BIAI, I'm calling about your request.\n- Ask which program."
+    assert rp.draft_warnings(ok, "english", "call_script", ["Caller wants a refund."]) == []

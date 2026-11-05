@@ -54,7 +54,7 @@ If shortlisted: a 20-minute call to show the work, including one small change ma
 
 ## 1. Goal
 
-Build a small, reliable CRM that BIAI's team would actually use to stop losing enquiries, and that scores as high as possible on BIAI's rubric.
+Build a small, reliable CRM that BIAI's team would actually use to stop losing enquiries, and that covers every point BIAI said it would assess.
 
 Every decision in this PRD is judged by one question: **does it raise a rubric score, and can we show it in a 5-minute Loom video?** If a feature cannot be shown or explained in the video, it is low priority.
 
@@ -121,7 +121,7 @@ Secondary user: a BIAI manager reading the weekly summary.
 | D3 | Priority + reason, including code-side escalation to `urgent` | Staff see what to do first and why. |
 | D4 | FAQ-grounded replies (no invented facts) | Avoids the most damaging AI failure; strong "smart AI" talking point. |
 | D5 | Low-confidence field highlights | Human-in-the-loop design; shows judgement. |
-| D6 | Eval script + accuracy table | Measurable proof. Almost no candidate will have this. |
+| D6 | Eval script + accuracy table | Measurable proof that the AI works, and an honest view of where it fails. |
 | D7 | Channel-aware replies (public comment, call script) | Shows understanding of real workflows. |
 | D8 | CSV export of the pipeline | Small, practical. Only if everything else is done. |
 

@@ -163,7 +163,7 @@ def to_detail(c: Contact, now: datetime) -> ContactDetail:
 
 def draft_out(d: ReplyDraft, c: Contact) -> ReplyDraftOut:
     messages = [e.message for e in c.enquiries]
-    warnings = draft_warnings(d.body, d.language, d.format, messages)
+    warnings = draft_warnings(d.body, d.language, d.format, messages, c.name)
     return ReplyDraftOut(
         **d.model_dump(exclude={"created_at", "contact_id"}),
         created_at=local(d.created_at),

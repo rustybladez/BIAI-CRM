@@ -21,7 +21,7 @@ sys.path.insert(0, str(ROOT))
 
 from sqlmodel import Session, SQLModel, select  # noqa: E402
 
-from backend.ai.replies import ask_for, foreign_letters, reply_format, unverified_numbers  # noqa: E402
+from backend.ai.replies import ask_for, draft_warnings, foreign_letters, reply_format, unverified_numbers  # noqa: E402
 from backend.api.replies import new_draft  # noqa: E402
 from backend.config import DHAKA  # noqa: E402
 from backend.db import Contact, Enquiry, make_engine  # noqa: E402
@@ -171,6 +171,16 @@ def check(session: Session) -> tuple[list[tuple[str, int, int]], list[str], list
         if expected_fmt == "public_comment":
             n = len(SENTENCE_END.findall(body.strip())) or 1
             record("public comment ≤ 2 sentences", n <= 2, item, f"{n} sentences")
+        msgs = [e.message for e in enquiries]
+        w = draft_warnings(body, item["language"], item["format"], msgs, c.name)
+        greet = [x for x in w if "salam" in x]
+        record("answers a salam instead of repeating it", not greet, item, "; ".join(greet))
+        if item["language"] == "bangla":
+            nm = [x for x in w if "name in Bangla" in x]
+            record("Bangla reply writes the name in Bangla", not nm, item, "; ".join(nm))
+        if item["format"] == "call_script":
+            cs = [x for x in w if "calling them back" in x]
+            record('call script does not say "thanks for calling"', not cs, item, "; ".join(cs))
         unverified = unverified_numbers(body, [e.message for e in enquiries])
         record("number guard: 0 unverified numbers", not unverified, item, f"unverified {unverified}")
         if c.missing_phone and ask_for(c.missing_info, True, reply_format(c.message_type, channel), c.flags):

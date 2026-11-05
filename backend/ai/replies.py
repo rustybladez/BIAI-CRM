@@ -87,11 +87,31 @@ def foreign_letters(body: str) -> list[str]:
     return list(dict.fromkeys(out))
 
 
-def draft_warnings(body: str, language: str, fmt: str, customer_messages: list[str]) -> list[str]:
+_SALAM = re.compile(r"assalam|asalam|\bsalam\b|আসসালাম|সালাম", re.I)
+_REPEATED_SALAM = re.compile(r"^\W*(assalam|asalam|আসসালাম)", re.I)
+_THANKS_FOR_CALLING = re.compile(
+    r"thank(s| you) for (your )?call|for calling|call kor(ar|ার) jonno dhonnobad|কল করার জন্য ধন্যবাদ|ফোন করার জন্য ধন্যবাদ",
+    re.I,
+)
+
+
+def draft_warnings(
+    body: str, language: str, fmt: str, customer_messages: list[str], name: str | None = None
+) -> list[str]:
     """Problems a human should check before sending. Empty list = looks fine."""
     if fmt == ReplyFormat.none.value:
         return []
     warnings = []
+    if any(_SALAM.search(m) for m in customer_messages) and _REPEATED_SALAM.search(body):
+        warnings.append("The customer said salam: answer it (Walaikum assalam) instead of repeating it")
+    if language == Language.bangla.value and name:
+        latin = [
+            part for part in name.split() if len(part) > 2 and part.isascii() and part.lower() in body.lower()
+        ]
+        if latin:
+            warnings.append(f"Write the name in Bangla script, not {' '.join(latin)}")
+    if fmt == ReplyFormat.call_script.value and _THANKS_FOR_CALLING.search(body):
+        warnings.append('We are calling them back: do not open with "thank you for calling"')
     if foreign := foreign_letters(body):
         warnings.append(f"Contains letters from another script: {' '.join(foreign)}")
     has_bangla = bool(_BANGLA_LETTER.search(body))
@@ -148,7 +168,7 @@ def generate_reply(
         messages=messages,
     )
     result = call_json(prompt, SuggestedReply, providers=providers, temperature=0.3)
-    warnings = draft_warnings(result.data.body, language, fmt.value, messages)
+    warnings = draft_warnings(result.data.body, language, fmt.value, messages, name)
     if warnings:
         # One rewrite with the problems named; whatever is left is shown as "check before sending".
         retry = [
@@ -162,7 +182,7 @@ def generate_reply(
             },
         ]
         second = call_json(retry, SuggestedReply, providers=providers, temperature=0.3)
-        if len(draft_warnings(second.data.body, language, fmt.value, messages)) < len(warnings):
+        if len(draft_warnings(second.data.body, language, fmt.value, messages, name)) < len(warnings):
             second.latency_ms += result.latency_ms
             result = second
     r = result.data
