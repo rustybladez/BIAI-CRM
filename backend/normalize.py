@@ -266,10 +266,33 @@ def change_status(session: Session, contact: Contact, status: str, now: datetime
     session.add(contact)
 
 
+def _ai_priority(session: Session, contact: Contact) -> tuple[str, str] | None:
+    """Highest priority the AI gave any of this contact's messages, with that message's reason.
+    Ties go to the most recent message."""
+    enquiries = session.exec(select(Enquiry).where(Enquiry.contact_id == contact.id)).all()
+    best: tuple[int, int, str, str] | None = None
+    for e in enquiries:
+        p, reason = e.extraction_json.get("priority"), e.extraction_json.get("priority_reason", "")
+        if p not in {x.value for x in Priority}:
+            continue
+        key = (PRIORITY_RANK[Priority(p)], e.id or 0, p, reason)
+        if best is None or key[:2] > best[:2]:
+            best = key
+    return (best[2], best[3]) if best else None
+
+
 def mark_sent(session: Session, contact: Contact, now: datetime, body: str = "") -> None:
-    """Rule 6: log the reply, set last_outbound_at (clears overdue), and move New -> Contacted."""
+    """Rule 6: log the reply, set last_outbound_at (clears overdue), and move New -> Contacted.
+    A rule-4 escalation ("asked again, no reply yet") is no longer true once we reply: drop the
+    repeat_no_reply flag and go back to the AI's own priority (highest across their messages).
+    If they write again before our next reply, rule 4 escalates again."""
     session.add(Activity(contact_id=contact.id, kind="reply_sent", body=body, at=now))
     contact.last_outbound_at = now
+    if REPEAT_NO_REPLY in contact.flags:
+        contact.flags = [f for f in contact.flags if f != REPEAT_NO_REPLY]
+        restored = _ai_priority(session, contact)
+        if restored:
+            contact.priority, contact.priority_reason = restored
     if contact.status == Status.new.value:
         change_status(session, contact, Status.contacted.value, now)
     contact.updated_at = utcnow()

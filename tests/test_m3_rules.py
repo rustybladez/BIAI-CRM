@@ -220,3 +220,33 @@ def test_same_minute_reply_then_new_message_is_still_unanswered(seeded):
     assert awaiting_reply(rafi)
     assert waiting_since(rafi) == NOW  # 12:00, not Monday: we replied in between
     assert no_reply_since_last_message(rafi)
+
+
+def test_mark_sent_drops_the_stale_rule4_escalation(seeded):
+    rafi = contact_for(seeded, 1)
+    assert rafi.priority == "urgent" and REPEAT_NO_REPLY in rafi.flags
+    assert rafi.priority_reason == "Asked again, no reply yet."
+
+    mark_sent(seeded, rafi, NOW)
+    seeded.commit()
+    first = seeded.exec(select(Enquiry).where(Enquiry.seed_id == 1)).one().extraction_json
+    assert rafi.priority == "high" == first["priority"]  # #1 high beats #12 medium
+    assert rafi.priority_reason == first["priority_reason"]
+    assert "no reply yet" not in rafi.priority_reason.lower()
+    assert REPEAT_NO_REPLY not in rafi.flags and DUPLICATE_MERGED in rafi.flags
+
+    # One new message after our reply is a fresh question: no escalation.
+    again, merged = _ingest(seeded, "2026-10-28T12:00", phone="01711000001")
+    assert merged and again is rafi
+    assert rafi.priority == "high" and REPEAT_NO_REPLY not in rafi.flags
+    # Writes again before our next reply: rule 4 escalates again.
+    _ingest(seeded, "2026-10-28T12:05", phone="01711000001")
+    assert rafi.priority == "urgent" and REPEAT_NO_REPLY in rafi.flags
+    assert rafi.priority_reason == "Asked again, no reply yet."
+
+
+def test_mark_sent_leaves_priority_alone_without_escalation(seeded):
+    habibur = contact_for(seeded, 16)
+    before = (habibur.priority, habibur.priority_reason)
+    mark_sent(seeded, habibur, NOW)
+    assert (habibur.priority, habibur.priority_reason) == before == ("urgent", habibur.priority_reason)

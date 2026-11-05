@@ -112,3 +112,9 @@ message is unanswered when its Activity id is greater than the latest `reply_sen
 `awaiting_reply`, `waiting_since`, `no_reply_since_last_message` and so `would_escalate`. Tests (rules and API):
 Rafi marked sent at 28 Oct 12:00, then a new message from 01711000001 at 12:00 is awaiting a reply with
 `waiting_since` = 12:00; both tests fail on the previous code.
+
+**Stale escalation after a reply (2026-11-05, found in review):** after Mark as sent, Rafi kept "urgent · Asked
+again, no reply yet" and the "Asked again" banner although we had just replied. `mark_sent` now drops the
+`repeat_no_reply` flag and restores the highest AI priority across the contact's messages with that message's
+reason (Rafi: high, from #1); `duplicate_merged` stays. If they write twice before our next reply, rule 4
+escalates again. Tests cover the round trip; the browser test checks the banner disappears and HIGH is shown.

@@ -145,8 +145,15 @@ require('fs').mkdirSync(S, { recursive: true });
     if ((await panel().getByRole('button', { name: 'Banglish' }).getAttribute('aria-pressed')) !== 'true') throw new Error('language');
     if (!/dukkhito|sorry|deri/i.test(await replyText().inputValue())) throw new Error('no apology');
     await p.screenshot({ path: S + '3-rafi.png' });
+    if (!(await panel().innerText()).includes('Asked again')) throw new Error('no Asked again banner before sending');
     await panel().getByRole('button', { name: 'Mark as sent' }).click();
     await conv.getByText('You · marked as sent').waitFor();
+    // The rule-4 escalation is stale once we replied: banner and flag gone, back to the AI's priority (high)
+    await panel().getByText('Asked again').first().waitFor({ state: 'detached' });
+    const header = await panel().locator('header').innerText();
+    if (!/HIGH/i.test(header) || /URGENT/i.test(header)) throw new Error('priority after sending: ' + header.slice(0, 80));
+    if ((await panel().innerText()).includes('no reply yet')) throw new Error('stale reason still shown');
+    await p.screenshot({ path: S + '3-rafi-after-sent.png' });
     await p.getByRole('status').filter({ hasText: 'moved to Contacted' }).waitFor();
     await close();
     await card('Contacted', 'Rafi Ahmed').waitFor();

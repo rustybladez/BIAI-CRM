@@ -189,7 +189,7 @@ Enums live in `backend/ai/schema.py` and are the single source of truth. The fro
 3. **Duplicate merge:** same normalised phone → same Contact. Contacts without a phone are never auto-merged (documented limitation).
 4. **Priority escalation:** if a contact sends a new inbound message and `last_outbound_at` is null or earlier than the previous inbound, set priority to `urgent`, add system flag `repeat_no_reply`, reason "Asked again, no reply yet".
 5. **Overdue (48h rule):** a pipeline contact (any status except Lost) we owe a reply to is overdue if `follow_up_by` has passed, or if `now − waiting_since > 48h`, where `waiting_since` is their first message after our last reply (a second message does not restart the clock). "After our last reply" is decided by event order (Activity id), not timestamps, so a message saved in the same minute as a reply still counts as unanswered. `now` = demo clock.
-6. **Mark as sent:** logs `reply_sent`, sets `last_outbound_at`, and moves `New → Contacted`. Clears overdue.
+6. **Mark as sent:** logs `reply_sent`, sets `last_outbound_at`, and moves `New → Contacted`. Clears overdue. If rule 4 had escalated the contact, the escalation is dropped (no `repeat_no_reply` flag; priority and reason go back to the highest AI priority across their messages).
 7. **Status changes are staff actions.** The AI only sets `New` or `Paid` on intake.
 
 ### Demo clock
