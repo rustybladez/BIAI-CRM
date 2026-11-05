@@ -1,11 +1,11 @@
 # Extraction eval report
 
-- Date: 2026-11-04 19:19 (Asia/Dhaka)
+- Date: 2026-11-05 14:29 (Asia/Dhaka)
 - Routing: deepseek:deepseek-flash -> gemini:gemini-3.5-flash
 - Seed data: backend/seed/ai_results.json kept (report-only run)
 - Enquiries: 20 (all)
 - Calls that fell back to another provider: 0; failed completely: 0
-- Median latency: 2876 ms
+- Median latency: 2343 ms
 
 | Field | Score | Target | Met |
 |---|---|---|---|
@@ -18,7 +18,7 @@
 | follow_up_by date | 3/3 (100%) | ≥ 3/3 | yes |
 | flags recall | 9/9 (100%) | ≥ 85% | yes |
 | valid JSON first try | 20/20 (100%) | ≥ 19/20 | yes |
-| priority (exact) | 19/20 (95%) | - | - |
+| priority (exact) | 17/20 (85%) | - | - |
 | team_size | 3/3 (100%) | - | - |
 | role | 4/4 (100%) | - | - |
 | company | 3/3 (100%) | - | - |
@@ -31,7 +31,9 @@ Priority one level away from the gold label. The scoring rules accept this; list
 
 | id | field | expected | got |
 |---|---|---|---|
+| 5 | priority | medium | low |
 | 6 | priority | low | medium |
+| 9 | priority | medium | low |
 
 ## Mismatches
 

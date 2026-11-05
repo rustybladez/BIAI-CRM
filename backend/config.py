@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
+load_dotenv(ROOT / "backend" / ".env")  # either location works; neither overrides the real env
 
 # SQLite DB and other runtime files. Assume it can be wiped on restart (reseed on boot).
 DATA_DIR = Path(os.getenv("DATA_DIR") or ROOT / "data")

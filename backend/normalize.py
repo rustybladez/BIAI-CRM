@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import object_session
 from sqlmodel import Session, select
 
-from backend.ai.schema import ExtractedEnquiry, MessageType, Priority, Status
+from backend.ai.schema import AIFlag, ExtractedEnquiry, MessageType, Priority, Status
 from backend.config import parse_local
 from backend.db import Activity, Contact, Enquiry, utcnow
 
@@ -65,13 +65,22 @@ def _add_flags(contact: Contact, *flags: str) -> None:
     contact.flags = [*contact.flags, *(f for f in flags if f not in contact.flags)]
 
 
-def _follow_up(ex: ExtractedEnquiry) -> datetime | None:
+FOLLOW_UP_MAX_AHEAD = timedelta(days=7)
+
+
+def _follow_up(ex: ExtractedEnquiry, received_at: datetime) -> datetime | None:
+    """The AI's contact-by time. Dropped if unparseable, or if it is more than 7 days out with no
+    callback asked: that is almost always a join/start date, not a contact time. The 48h rule
+    covers those contacts anyway."""
     if not ex.follow_up_by:
         return None
     try:
-        return parse_local(ex.follow_up_by)
+        when = parse_local(ex.follow_up_by)
     except ValueError:
         return None  # AI returned an unparseable time; the 48h rule still applies
+    if when - received_at > FOLLOW_UP_MAX_AHEAD and AIFlag.callback_requested not in ex.flags:
+        return None
+    return when
 
 
 # ---- Rules 3-4: create or merge, with escalation ----
@@ -156,7 +165,7 @@ def ingest(
             priority=ex.priority.value,
             priority_reason=ex.priority_reason,
             flags=[f.value for f in ex.flags],
-            follow_up_by=_follow_up(ex),
+            follow_up_by=_follow_up(ex, received_at),
             low_confidence_fields=list(ex.low_confidence_fields),
             summary=ex.summary,
             missing_info=list(ex.missing_info),
@@ -187,7 +196,7 @@ def ingest(
             contact.priority = Priority.urgent.value
             contact.priority_reason = "Asked again, no reply yet."
             _add_flags(contact, REPEAT_NO_REPLY)
-        new_follow_up = _follow_up(ex)
+        new_follow_up = _follow_up(ex, received_at)
         if new_follow_up and (contact.follow_up_by is None or new_follow_up < contact.follow_up_by):
             contact.follow_up_by = new_follow_up
         contact.summary = ex.summary

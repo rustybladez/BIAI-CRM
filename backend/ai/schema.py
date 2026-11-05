@@ -85,9 +85,11 @@ class ExtractedEnquiry(BaseModel):
     follow_up_by: str | None = Field(
         None,
         description=(
-            "Local Dhaka time 'YYYY-MM-DDTHH:MM' ONLY if the message states or implies a time "
-            "(e.g. 'tomorrow after 5 PM', 'this week', 'today'). Null otherwise; code applies "
-            "the default 48h rule."
+            "Local Dhaka time 'YYYY-MM-DDTHH:MM' by which WE should contact THEM: they asked for a "
+            "call or reply by a time ('call me tomorrow after 5 PM', 'this week e janaben'), said when "
+            "they will call us, or set a deadline ('solve it today'). Null for times about anything "
+            "else (when they want to join or start, when they paid, batch or exam dates). Null "
+            "otherwise; code applies the default 48h rule."
         ),
     )
     flags: list[AIFlag] = Field(default_factory=list)

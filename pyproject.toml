@@ -10,6 +10,7 @@ dependencies = [
     "openai",
     "python-dotenv",
     "pyyaml",
+    "tzdata>=2026.6",
 ]
 
 [dependency-groups]

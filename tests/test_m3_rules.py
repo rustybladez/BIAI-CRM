@@ -268,3 +268,17 @@ def test_reset_keeps_tables_and_restarts_cleanly(seeded):
     assert len(seeded.exec(select(Contact)).all()) == 19
     assert not seeded.exec(select(Activity).where(Activity.kind == "reply_sent")).all()
     assert contact_for(seeded, 1).priority == "urgent"  # back to the seeded state
+
+
+@pytest.mark.parametrize(
+    ("follow_up", "flags", "kept"),
+    [
+        ("2026-11-30T17:00", [], False),  # "join this month" read as a contact time: dropped
+        ("2026-11-30T17:00", ["callback_requested"], True),  # they asked us to call then: kept
+        ("2026-11-08T17:00", [], True),  # within 7 days: kept
+        ("2026-11-12T10:00", [], True),  # exactly 7 days: kept
+    ],
+)
+def test_far_follow_up_dropped_unless_callback(session, follow_up, flags, kept):
+    c, _ = _ingest(session, "2026-11-05T10:00", follow_up_by=follow_up, flags=flags)
+    assert (c.follow_up_by == parse_local(follow_up)) if kept else c.follow_up_by is None

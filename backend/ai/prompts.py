@@ -51,7 +51,13 @@ Read ONE enquiry and return a single JSON object that follows the JSON schema be
    A job title stated in the message (e.g. "I am an HR executive") also goes to role.
    If the sender is clearly not a person (a page or brand name), name is null.
 7. Numbers may be written in Bangla digits (০১২৩৪৫৬৭৮৯). Convert them for team_size. Copy phone numbers as-is.
-8. follow_up_by: only when the message gives a time. Resolve relative times against received_at, not today.
+8. follow_up_by: ONLY for when WE should contact THEM. Set it only if the message:
+   - asks for a call or reply by a time ("call me tomorrow", "this week e janaben"),
+   - says when they will call us ("I'll call after 5"), or
+   - sets a deadline for us ("solve it today").
+   Times about anything else stay null: when they want to join or start, when they paid, batch dates,
+   exam dates, holidays. "I want to join next month" is NOT a follow-up time.
+   Resolve relative times against received_at, not today.
    Bangladesh workweek is Sunday to Thursday, so "this week" means by Thursday 17:00.
    "today" with a deadline means received_at date, 17:00. Otherwise null.
 9. flags: add every one that applies; empty list if none.
@@ -78,6 +84,14 @@ message: Bhai fellowship er next batch kobe? Ami CSE 3rd year e pori, weekend e 
 
 Output:
 {{"message_type":"lead","message_type_reason":"Student asking about the next fellowship batch.","name":"Nayeem","role":null,"company":null,"team_size":null,"phone_in_message":null,"interest":"fellowship","interest_detail":"Next batch date; weekend schedule; CSE student","language":"banglish","status":"New","priority":"medium","priority_reason":"Interested student asking schedule details.","follow_up_by":null,"flags":[],"summary":"CSE student asks when the next fellowship batch starts and if weekends work.","missing_info":[],"low_confidence_fields":[]}}
+
+Input:
+channel: WhatsApp | received_at: 2026-03-05 18:30 | sender_name: Tahmid | phone: 01700000000
+script: Latin letters only
+message: Ami next month e bootcamp korte chai, fee koto?
+
+Output:
+{{"message_type":"lead","message_type_reason":"Prospect asking the bootcamp fee before joining.","name":"Tahmid","role":null,"company":null,"team_size":null,"phone_in_message":null,"interest":"bootcamp","interest_detail":"Bootcamp fee; wants to start next month","language":"banglish","status":"New","priority":"medium","priority_reason":"Normal pre-purchase price question.","follow_up_by":null,"flags":[],"summary":"Wants to join the bootcamp next month and asks the fee. Next month is when they start, not when to contact them.","missing_info":[],"low_confidence_fields":[]}}
 
 Input:
 channel: Website form | received_at: 2026-03-03 15:00 | sender_name: Laila Noor (CEO, a fintech startup) | phone:
