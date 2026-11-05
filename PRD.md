@@ -188,7 +188,7 @@ Enums live in `backend/ai/schema.py` and are the single source of truth. The fro
 2. **Missing phone:** true if no valid phone from either source.
 3. **Duplicate merge:** same normalised phone → same Contact. Contacts without a phone are never auto-merged (documented limitation).
 4. **Priority escalation:** if a contact sends a new inbound message and `last_outbound_at` is null or earlier than the previous inbound, set priority to `urgent`, add system flag `repeat_no_reply`, reason "Asked again, no reply yet".
-5. **Overdue (48h rule):** a pipeline contact is overdue if `follow_up_by` has passed, or if status is `New` and `now − last_inbound_at > 48h` with no outbound since. `now` = demo clock.
+5. **Overdue (48h rule):** a pipeline contact (any status except Lost) we owe a reply to is overdue if `follow_up_by` has passed, or if `now − waiting_since > 48h`, where `waiting_since` is their first message after our last reply (a second message does not restart the clock). `now` = demo clock.
 6. **Mark as sent:** logs `reply_sent`, sets `last_outbound_at`, and moves `New → Contacted`. Clears overdue.
 7. **Status changes are staff actions.** The AI only sets `New` or `Paid` on intake.
 
@@ -340,7 +340,8 @@ Plus a manual review: print all 20 replies to `eval/replies.md`; the owner reads
 - Phone normalisation: `০১৭১১০০০০০১`, `+8801711000001`, `01711-000001` → `01711000001`.
 - Rafi merge: rows #1 + #12 → one contact, two enquiries, priority `urgent`, flag `repeat_no_reply`.
 - Missing phone count = 6.
-- Overdue with demo clock `2026-10-28T12:00`: #16 overdue (follow-up by 27 Oct 17:00); a contact marked "sent" is not overdue.
+- Overdue with demo clock `2026-10-28T12:00`: #16 overdue (follow-up by 27 Oct 17:00); Rafi overdue (waiting since his first message, Mon 09:12); a contact marked "sent" is not overdue.
+- The 48-hour rule applies to every pipeline status except Lost, counted from the first unanswered message.
 - Reseed: empty DB → 19 contacts (20 messages, one merge).
 
 ---
@@ -436,8 +437,8 @@ The product is built so that this script works every time. Use the deployed URL 
 
 | Time | Beat | On screen | Rubric line |
 |---|---|---|---|
-| 0:00–0:25 | The problem in BIAI's words: four channels, lost enquiries, no follow-up view | **Today** screen: "6 people are overdue and 2 are urgent", five KPI cards | Loom, usability |
-| 0:25–1:10 | **Morning routine:** Needs you now, Habibur's refund threat at the top → Call → call script; › to the next person | Today → contact panel | Usability, smart AI |
+| 0:00–0:25 | The problem in BIAI's words: four channels, lost enquiries, no follow-up view | **Today** screen: "7 people are overdue and 2 are urgent", five KPI cards | Loom, usability |
+| 0:25–1:10 | **Morning routine:** Needs you now: Rafi (asked twice, waiting 50 h) and Habibur (refund threat, deadline today) at the top → Call Habibur → call script; ‹ › to step through the queue | Today → contact panel | Usability, smart AI |
 | 1:10–1:50 | **Lost enquiry caught:** Rafi asked twice, merged (two bubbles + merge line), escalated to urgent; Banglish reply that apologises → Mark as sent → Contacted | Contact panel | Usability, Bangla |
 | 1:50–2:40 | **Live paste:** New enquiry → invented Bangla company message → fields fill, team size from Bangla digits, priority with reason, AI-unsure field in amber → Save → Bangla reply, switch to Banglish | New enquiry → contact panel | Smart AI, Bangla, works end to end |
 | 2:40–3:15 | **No invented facts:** search "Nowshin" (#17 certificate) → reply only says what the FAQ says; number guard in one line | Search → contact panel | Smart AI, explain choices |

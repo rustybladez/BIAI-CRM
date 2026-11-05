@@ -54,7 +54,7 @@ export function FlagChips({ contact, withLabels = false }: { contact: ContactSum
 /** Wait time for a contact we still owe a reply. */
 export function WaitTime({ contact, now, className, compact = false }: { contact: ContactSummary; now: string; className?: string; compact?: boolean }) {
   if (!contact.awaiting_reply || contact.status === null) return null
-  const h = hoursSince(contact.last_inbound_at, now)
+  const h = hoursSince(contact.waiting_since, now)
   if (h === null) return null
   return (
     <span

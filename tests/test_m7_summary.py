@@ -33,9 +33,9 @@ def test_stats_on_seeded_data(seeded):
     assert st["not_a_lead"] == {"spam": 1, "irrelevant": 1}
     assert st["this_week"] == {"messages_received": 20, "new_contacts": 19, "replies_sent": 0}
     assert st["corporate"]["leads"] == 3 and st["corporate"]["total_people_to_train"] == 175
-    assert st["overdue_count"] == 6 and st["urgent_count"] == 2 and st["missing_phone"] == 5
-    first_two = [p["name"] for p in st["chase_candidates_ranked"][:2]]
-    assert first_two == ["Habibur Rahman", "Rafi Ahmed"]  # urgent first, overdue before not overdue
+    assert st["overdue_count"] == 7 and st["urgent_count"] == 2 and st["missing_phone"] == 5
+    first_two = {p["name"] for p in st["chase_candidates_ranked"][:2]}
+    assert first_two == {"Habibur Rahman", "Rafi Ahmed"}  # both urgent and overdue; longest wait first
 
 
 def _fake_ai(monkeypatch, *summaries: WeeklySummary):
@@ -110,7 +110,7 @@ def test_export_csv(seeded):
     rows = list(csv.DictReader(io.StringIO(text.lstrip("﻿"))))
     assert len(rows) == 19
     assert sum(r["status"] == "Not a lead" for r in rows) == 2
-    assert sum(r["overdue"] == "yes" for r in rows) == 6
+    assert sum(r["overdue"] == "yes" for r in rows) == 7
 
 
 def test_this_week_counts_stop_at_the_demo_clock(seeded):

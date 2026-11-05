@@ -50,8 +50,8 @@ def test_overdue_first_sort(seeded):
     keys = [(not i["overdue"], RANK[i["priority"]]) for i in items]
     assert keys == sorted(keys)
     new = [i["name"] for i in items if i["status"] == "New"]
-    assert new[0] == "Mahmud Hasan"  # high + overdue
-    assert new.index("Ishtiaq") < new.index("Rafi Ahmed")  # low but overdue, above urgent not overdue
+    assert new[0] == "Rafi Ahmed"  # urgent and overdue (waiting since Mon 09:12)
+    assert new.index("Ishtiaq") < new.index("Kamrul Islam")  # low but overdue, above high not overdue
 
 
 def test_ties_go_to_the_longest_wait(seeded):
@@ -69,7 +69,7 @@ def test_ties_go_to_the_longest_wait(seeded):
         ("status=Paid", [7, 16]),
         ("channel=Phone call note", [5, 16]),
         ("interest=corporate", [3, 10, 18]),
-        ("overdue=true", [2, 3, 4, 5, 6, 16]),
+        ("overdue=true", [1, 2, 3, 4, 5, 6, 16]),
         ("priority=urgent", [1, 16]),
         ("channel=WhatsApp&priority=high", [7, 10, 18, 19]),
     ],
@@ -150,7 +150,7 @@ def test_patch_follow_up_and_not_a_lead(seeded):
 def test_followups_at_default_clock(seeded):
     f = client.get("/api/followups").json()
     assert f["now"] == "2026-10-28T12:00:00+06:00"
-    assert seed_ids(seeded, f["overdue"]) == [2, 3, 4, 5, 6, 16] and f["due_today"] == []
+    assert seed_ids(seeded, f["overdue"]) == [1, 2, 3, 4, 5, 6, 16] and f["due_today"] == []
 
 
 def test_clock_changes_followups(seeded):

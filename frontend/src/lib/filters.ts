@@ -28,7 +28,8 @@ export function sortContacts(items: ContactSummary[], mode: SortMode): ContactSu
   const key = (c: ContactSummary): number[] => {
     const rank = RANK[c.priority] ?? 9
     const overdue = c.overdue ? 0 : 1
-    const waited = c.last_inbound_at ? new Date(c.last_inbound_at).getTime() : Number.MAX_SAFE_INTEGER
+    const since = c.waiting_since ?? c.last_inbound_at
+    const waited = since ? new Date(since).getTime() : Number.MAX_SAFE_INTEGER
     return mode === 'overdue' ? [overdue, rank, waited] : [rank, overdue, waited]
   }
   return [...items].sort((a, b) => {

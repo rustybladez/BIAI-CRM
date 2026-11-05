@@ -61,12 +61,13 @@ require('fs').mkdirSync(S, { recursive: true });
   await step('1 Today: status line, KPIs, queue, AI brief (seeded, no AI call)', async () => {
     await p.goto(BASE + '/#today');
     const h = await p.getByTestId('today-headline').innerText();
-    if (!h.includes('6 people are overdue and 2 are urgent')) throw new Error(h);
+    if (!h.includes('7 people are overdue and 2 are urgent')) throw new Error(h);
     if (!(await p.getByTestId('kpi-waiting').innerText()).includes('17')) throw new Error('waiting kpi');
     const rows = await p.getByTestId('queue').getByRole('listitem').count();
     if (rows !== 17) throw new Error('queue rows ' + rows);
-    const first = await p.getByTestId('queue').getByRole('listitem').first().innerText();
-    if (!first.includes('Habibur Rahman')) throw new Error('queue top ' + first.slice(0, 40));
+    const top2 = (await p.getByTestId('queue').getByRole('listitem').allInnerTexts()).slice(0, 2).join(' | ');
+    // Both urgent and overdue; the tie goes to the longest wait (Rafi since Mon 09:12, Habibur since Tue 12:30)
+    if (!/Rafi Ahmed[\s\S]*Habibur Rahman/.test(top2)) throw new Error('queue top two ' + top2.slice(0, 80));
     await p.getByTestId('brief').waitFor();
     await p.screenshot({ path: S + '1-today.png' });
   });
@@ -88,11 +89,15 @@ require('fs').mkdirSync(S, { recursive: true });
 
   await step('1b sort: priority first (default) vs overdue first, remembered on reload', async () => {
     const top = async () => (await col('New').locator('[data-testid^=card-]').first().innerText()).split('\n')[0];
+    const names = async () => (await col('New').locator('[data-testid^=card-]').allInnerTexts()).map((t) => t.split('\n')[0]);
+    const before = async (a, b) => { const n = await names(); return n.findIndex((x) => x.includes(a)) < n.findIndex((x) => x.includes(b)); };
     const radio = (n) => p.getByRole('radio', { name: n });
     if ((await radio('Priority first').getAttribute('aria-checked')) !== 'true') throw new Error('default');
     if (!(await top()).includes('Rafi Ahmed')) throw new Error('priority top ' + (await top()));
+    if (!(await before('Kamrul Islam', 'Tahmina Akter'))) throw new Error('priority: high should beat medium overdue');
     await radio('Overdue first').click();
-    if (!(await top()).includes('Mahmud Hasan')) throw new Error('overdue top ' + (await top()));
+    if (!(await top()).includes('Rafi Ahmed')) throw new Error('overdue top ' + (await top()));  // urgent + overdue
+    if (!(await before('Tahmina Akter', 'Kamrul Islam'))) throw new Error('overdue: medium overdue should beat high not overdue');
     await p.reload();
     await col('New').waitFor();
     if ((await radio('Overdue first').getAttribute('aria-checked')) !== 'true') throw new Error('not remembered');
@@ -113,17 +118,18 @@ require('fs').mkdirSync(S, { recursive: true });
     await p.getByRole('radio', { name: 'Board' }).click();
   });
 
-  await step('2 Habibur from the queue: call script, flags; next arrow steps to Rafi', async () => {
+  await step('2 Habibur from the queue: call script, flags; previous arrow steps to Rafi', async () => {
     await nav('Today').click();
-    await p.getByTestId('queue').getByRole('listitem').first().getByRole('button', { name: 'Call', exact: true }).click();
+    await p.getByTestId('queue').getByRole('listitem').filter({ hasText: 'Habibur Rahman' }).getByRole('button', { name: 'Call', exact: true }).click();
     await panel().getByText('Call script').waitFor();
     const all = (await panel().innerText()) + (await replyText().inputValue());
     for (const s of ['refund', 'may post publicly', 'opening:', 'call note by staff']) if (!all.toLowerCase().includes(s)) throw new Error('missing ' + s);
     await p.screenshot({ path: S + '2-habibur.png' });
-    await panel().getByRole('button', { name: /Next contact/ }).click();
+    if ((await panel().getByTestId('queue-position').innerText()) !== '2 of 17') throw new Error('Habibur position');
+    await panel().getByRole('button', { name: /Previous contact/ }).click();
     await panel().getByRole('heading', { name: 'Rafi Ahmed' }).waitFor();
     const pos = await panel().getByTestId('queue-position').innerText();
-    if (pos !== '2 of 17') throw new Error('position ' + pos);
+    if (pos !== '1 of 17') throw new Error('position ' + pos);
   });
 
   await step('3 Rafi: two messages + merge line, Banglish reply with apology, Mark as sent -> Contacted', async () => {
@@ -134,6 +140,8 @@ require('fs').mkdirSync(S, { recursive: true });
     const t = await conv.innerText();
     if ((t.match(/WhatsApp · Rafi Ahmed/g) || []).length !== 2) throw new Error('two messages');
     if (!t.includes('merged into this contact')) throw new Error('merge line');
+    const props = await panel().getByLabel('Details').innerText();
+    if (!/50 h overdue/.test(props)) throw new Error('Rafi should be 50 h overdue: ' + props.slice(0, 120));
     if ((await panel().getByRole('button', { name: 'Banglish' }).getAttribute('aria-pressed')) !== 'true') throw new Error('language');
     if (!/dukkhito|sorry|deri/i.test(await replyText().inputValue())) throw new Error('no apology');
     await p.screenshot({ path: S + '3-rafi.png' });
@@ -220,7 +228,7 @@ require('fs').mkdirSync(S, { recursive: true });
     await p.getByRole('status').filter({ hasText: 'Demo data reset' }).waitFor();
     await nav('Today').click();
     const h = await p.getByTestId('today-headline').innerText();
-    if (!h.includes('6 people are overdue and 2 are urgent')) throw new Error(h);
+    if (!h.includes('7 people are overdue and 2 are urgent')) throw new Error(h);
   });
 
   console.log('console errors:', errs.length ? errs : 'none');

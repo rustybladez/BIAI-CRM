@@ -16,7 +16,7 @@ from backend.ai.replies import numbers_in
 from backend.ai.schema import Priority, WeeklySummary
 from backend.config import DHAKA
 from backend.db import Activity, Contact, Enquiry
-from backend.normalize import PRIORITY_RANK, awaiting_reply, is_overdue
+from backend.normalize import PRIORITY_RANK, awaiting_reply, is_overdue, waiting_since
 
 CHASE_CANDIDATES = 8
 
@@ -33,9 +33,10 @@ def _fmt(dt: datetime | None) -> str | None:
 
 
 def _hours_waiting(c: Contact, now: datetime) -> int | None:
-    if not awaiting_reply(c) or c.last_inbound_at is None:
+    since = waiting_since(c)
+    if since is None:
         return None
-    return int((now - c.last_inbound_at).total_seconds() // 3600)
+    return max(0, int((now - since).total_seconds() // 3600))
 
 
 def _person(c: Contact, now: datetime) -> dict:

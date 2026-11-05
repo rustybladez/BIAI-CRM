@@ -93,3 +93,14 @@ overview and the "Not a lead" tray at the bottom. Redesigned around a left sideb
   exact priority 19/20 (#6 rated medium vs gold low, within the accepted one-level tolerance and listed in the
   report). Runs vary slightly: the previous run had 18/20 exact priority.
 - 108 backend tests, reply checks (55 drafts) and summary checks all pass; no API keys in the repo.
+
+**Overdue fix (2026-11-05, found in review):** two bugs in the 48-hour rule.
+1. Waiting time and overdue were measured from the *latest* message, so a second message restarted the clock:
+   Rafi showed "26 h" and was not overdue although he had waited 51 h since Monday 09:12. Now both are measured
+   from `waiting_since`, the first message after our last reply.
+2. The 48-hour rule only applied to status New, so Farzana (Paid, payment unconfirmed, four days without a
+   reply) was never overdue. The brief says "anyone not followed up in 48 hours": the rule now applies to every
+   pipeline status except Lost, whenever we owe a reply.
+At the default demo time 7 people are overdue (Rafi added). Rafi now ties with Habibur (both urgent and
+overdue) and goes first on the longest wait. Seeded weekly summary regenerated (all checks pass); tests added for
+both cases, for a Contacted contact who writes again, and for Lost / already-replied contacts.

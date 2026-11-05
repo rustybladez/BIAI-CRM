@@ -12,7 +12,7 @@ from backend.ai.replies import draft_warnings, unverified_numbers
 from backend.ai.schema import Priority
 from backend.config import DHAKA
 from backend.db import Contact, Enquiry, ReplyDraft
-from backend.normalize import PRIORITY_RANK, awaiting_reply, is_overdue
+from backend.normalize import PRIORITY_RANK, awaiting_reply, is_overdue, waiting_since
 
 
 def local(dt: datetime | None) -> datetime | None:
@@ -37,6 +37,7 @@ class ContactSummary(BaseModel):
     follow_up_by: datetime | None
     last_inbound_at: datetime | None
     last_outbound_at: datetime | None
+    waiting_since: datetime | None  # first unanswered message; None when we are not waiting to reply
     summary: str
     missing_info: list[str]
     low_confidence_fields: list[str]
@@ -129,6 +130,7 @@ def to_summary(c: Contact, now: datetime) -> ContactSummary:
         follow_up_by=local(c.follow_up_by),
         last_inbound_at=local(c.last_inbound_at),
         last_outbound_at=local(c.last_outbound_at),
+        waiting_since=local(waiting_since(c)),
         channel=enquiries[-1].channel if enquiries else None,
         channels=list(dict.fromkeys(e.channel for e in enquiries)),
         enquiry_count=len(enquiries),
@@ -182,7 +184,8 @@ def sort_key(s: ContactSummary, mode: SortMode = "priority") -> tuple:
     overdue: all overdue contacts first, then by priority within each group.
     """
     rank = -PRIORITY_RANK[Priority(s.priority)]
-    waited = s.last_inbound_at.timestamp() if s.last_inbound_at else float("inf")
+    since = s.waiting_since or s.last_inbound_at
+    waited = since.timestamp() if since else float("inf")
     if mode == "overdue":
         return (not s.overdue, rank, waited)
     return (rank, not s.overdue, waited)

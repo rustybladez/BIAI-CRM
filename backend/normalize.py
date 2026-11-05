@@ -204,13 +204,31 @@ def awaiting_reply(contact: Contact) -> bool:
     return contact.last_outbound_at is None or contact.last_outbound_at < contact.last_inbound_at
 
 
+def waiting_since(contact: Contact) -> datetime | None:
+    """When the contact started waiting for us: their first message after our last reply.
+    A second message does not restart the clock (Rafi asked on Monday and again on Tuesday: he has
+    been waiting since Monday)."""
+    if not awaiting_reply(contact):
+        return None
+    unanswered = [
+        e.received_at
+        for e in contact.enquiries
+        if contact.last_outbound_at is None or e.received_at > contact.last_outbound_at
+    ]
+    return min(unanswered) if unanswered else contact.last_inbound_at
+
+
 def is_overdue(contact: Contact, now: datetime) -> bool:
-    """A pipeline contact we owe a reply to, whose follow-up time has passed or who has been New > 48h."""
-    if contact.status in (None, Status.lost.value) or not awaiting_reply(contact):
+    """Rule 5: anyone in the pipeline (any status except Lost) we owe a reply to, whose own follow-up time
+    has passed or who has waited more than 48 h since their first unanswered message."""
+    if contact.status in (None, Status.lost.value):
+        return False
+    since = waiting_since(contact)
+    if since is None:
         return False
     if contact.follow_up_by is not None and contact.follow_up_by <= now:
         return True
-    return contact.status == Status.new.value and now - contact.last_inbound_at > OVERDUE_AFTER
+    return now - since > OVERDUE_AFTER
 
 
 # ---- Rules 6-7: staff actions ----

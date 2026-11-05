@@ -46,6 +46,7 @@ export type ContactSummary = {
   follow_up_by: string | null
   last_inbound_at: string | null
   last_outbound_at: string | null
+  waiting_since: string | null // first unanswered message; null when we are not waiting to reply
   summary: string
   missing_info: string[]
   low_confidence_fields: string[]

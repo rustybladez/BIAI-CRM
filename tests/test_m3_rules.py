@@ -84,10 +84,45 @@ def test_gold_system_expectations(seeded):
 
 
 def test_overdue_at_demo_clock(seeded):
-    overdue = sorted({e.seed_id for e in seeded.exec(select(Enquiry)).all() if is_overdue(e.contact, NOW)})
+    first_seed = {}
+    for e in seeded.exec(select(Enquiry)).all():
+        first_seed[e.contact_id] = min(first_seed.get(e.contact_id, e.seed_id), e.seed_id)
+    overdue = sorted(first_seed[c.id] for c in seeded.exec(select(Contact)).all() if is_overdue(c, NOW))
     # 16: follow-up "today" (27 Oct 17:00) passed; 5: "tomorrow after 5 PM" passed;
-    # 2, 3, 4, 6: New and unanswered for > 48h. Rafi (1/12) wrote again on 27 Oct, so < 48h.
-    assert overdue == [2, 3, 4, 5, 6, 16]
+    # 2, 3, 4, 6: unanswered for > 48h. 1 (Rafi): his second message on 27 Oct does not restart the
+    # clock, he has waited since Mon 09:12 (50.8 h). 7 (Farzana) wrote at 12:48, so 47.2 h: not yet.
+    assert overdue == [1, 2, 3, 4, 5, 6, 16]
+
+
+def test_rafi_waits_since_his_first_unanswered_message(seeded):
+    from backend.normalize import waiting_since
+
+    rafi = contact_for(seeded, 1)
+    assert waiting_since(rafi) == parse_local("2026-10-26T09:12")
+    assert is_overdue(rafi, NOW)
+    mark_sent(seeded, rafi, NOW)
+    assert waiting_since(rafi) is None and not is_overdue(rafi, NOW)
+
+
+def test_48h_rule_applies_to_every_status_except_lost(seeded):
+    later = parse_local("2026-10-30T16:00")
+    pipeline = [c for c in seeded.exec(select(Contact)).all() if c.status]
+    assert len(pipeline) == 17 and all(is_overdue(c, later) for c in pipeline)  # incl. Farzana (Paid)
+    farzana = contact_for(seeded, 7)
+    assert farzana.status == "Paid" and is_overdue(farzana, later)
+    farzana.status = "Lost"
+    assert not is_overdue(farzana, later)
+
+
+def test_contacted_contact_who_writes_again_becomes_overdue(session):
+    c, _ = _ingest(session, "2026-10-26T09:00")
+    mark_sent(session, c, parse_local("2026-10-26T10:00"))
+    assert c.status == "Contacted" and not is_overdue(
+        c, parse_local("2026-10-30T10:00")
+    )  # ball in their court
+    _ingest(session, "2026-10-27T09:00")  # they write again
+    assert not is_overdue(c, parse_local("2026-10-29T08:59"))
+    assert is_overdue(c, parse_local("2026-10-29T09:01"))  # 48 h after the new, unanswered message
 
 
 def test_mark_sent_clears_overdue_and_moves_new_to_contacted(seeded):
