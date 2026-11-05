@@ -201,3 +201,22 @@ def test_reset_endpoint_and_seed_on_startup():
 
     with Session(engine) as s:
         assert len(s.exec(select(Contact)).all()) == 19
+
+
+def test_same_minute_reply_then_new_message_is_still_unanswered(seeded):
+    """Frozen demo clock: a reply marked sent and a new message saved in the same minute share a timestamp.
+    Event order decides: the message saved after the reply is unanswered."""
+    from backend.normalize import awaiting_reply, no_reply_since_last_message, waiting_since
+
+    rafi = contact_for(seeded, 1)
+    mark_sent(seeded, rafi, NOW)  # 2026-10-28T12:00
+    seeded.commit()
+    assert not awaiting_reply(rafi) and waiting_since(rafi) is None
+    assert not no_reply_since_last_message(rafi)
+
+    again, merged = _ingest(seeded, "2026-10-28T12:00", phone="01711000001")
+    seeded.commit()
+    assert merged and again is rafi
+    assert awaiting_reply(rafi)
+    assert waiting_since(rafi) == NOW  # 12:00, not Monday: we replied in between
+    assert no_reply_since_last_message(rafi)

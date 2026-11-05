@@ -261,3 +261,17 @@ def test_reset_restores_demo_clock(seeded):
 )
 def test_search(seeded, q, expected):
     assert seed_ids(seeded, client.get("/api/contacts", params={"q": q}).json()) == expected
+
+
+def test_same_minute_reply_and_new_message_via_api(seeded, monkeypatch):
+    rafi = cid(seeded, 1)
+    client.post(f"/api/contacts/{rafi}/reply/sent", json={"body": "Fee 8,500 taka"})  # demo clock 12:00
+    ex = fake_ai(monkeypatch)
+    msg = MSG | {"phone": "01711000001", "received_at": "2026-10-28T12:00"}
+    assert client.post("/api/intake/save", json=msg | {"extraction": ex.model_dump(mode="json")}).json()[
+        "merged"
+    ]
+    d = client.get(f"/api/contacts/{rafi}").json()
+    assert d["awaiting_reply"] is True
+    assert d["waiting_since"] == "2026-10-28T12:00:00+06:00"
+    assert not d["overdue"]

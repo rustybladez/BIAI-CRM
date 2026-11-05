@@ -104,3 +104,11 @@ overview and the "Not a lead" tray at the bottom. Redesigned around a left sideb
 At the default demo time 7 people are overdue (Rafi added). Rafi now ties with Habibur (both urgent and
 overdue) and goes first on the longest wait. Seeded weekly summary regenerated (all checks pass); tests added for
 both cases, for a Contacted contact who writes again, and for Lost / already-replied contacts.
+
+**Event order for "awaiting reply" (2026-11-05, found in review):** with the frozen demo clock, a reply marked
+sent and a new message saved in the same minute had equal timestamps, so `last_outbound_at < last_inbound_at`
+was false and the new message counted as answered. "Who owes a reply" is now decided by event order: an inbound
+message is unanswered when its Activity id is greater than the latest `reply_sent` Activity id. Used by
+`awaiting_reply`, `waiting_since`, `no_reply_since_last_message` and so `would_escalate`. Tests (rules and API):
+Rafi marked sent at 28 Oct 12:00, then a new message from 01711000001 at 12:00 is awaiting a reply with
+`waiting_since` = 12:00; both tests fail on the previous code.

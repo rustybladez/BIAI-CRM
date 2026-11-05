@@ -6,6 +6,7 @@ other records, arithmetic or the clock lives here, so it is deterministic and te
 import re
 from datetime import datetime, timedelta
 
+from sqlalchemy.orm import object_session
 from sqlmodel import Session, select
 
 from backend.ai.schema import ExtractedEnquiry, MessageType, Priority, Status
@@ -81,10 +82,38 @@ def find_duplicate(session: Session, phone: str | None) -> Contact | None:
     return session.exec(select(Contact).where(Contact.phone == phone)).first()
 
 
+# ---- Who owes whom a reply: decided by event order, not time ----
+# With a frozen demo clock a reply and a new message can share the same timestamp, so comparing times would
+# count that message as answered. Activity ids increase in the order events are saved, so an inbound message
+# is unanswered when its id is greater than the id of the latest reply_sent activity.
+
+
+def _events(contact: Contact) -> list[Activity]:
+    """This contact's inbound / reply_sent activities, read fresh (includes ones added in this session)."""
+    session = object_session(contact)
+    if session is None or contact.id is None:
+        events = [a for a in contact.activities if a.kind in ("inbound", "reply_sent")]
+    else:
+        events = list(
+            session.exec(
+                select(Activity).where(
+                    Activity.contact_id == contact.id, Activity.kind.in_(("inbound", "reply_sent"))
+                )
+            ).all()
+        )
+    return sorted(events, key=lambda a: a.id or 0)
+
+
+def unanswered_messages(contact: Contact) -> list[Activity]:
+    """Inbound messages saved after our latest reply (all of them if we never replied)."""
+    events = _events(contact)
+    last_reply = max((a.id or 0 for a in events if a.kind == "reply_sent"), default=0)
+    return [a for a in events if a.kind == "inbound" and (a.id or 0) > last_reply]
+
+
 def no_reply_since_last_message(contact: Contact) -> bool:
-    return contact.last_outbound_at is None or (
-        contact.last_inbound_at is not None and contact.last_outbound_at < contact.last_inbound_at
-    )
+    """Before saving a new message: true if the contact's previous message(s) are still unanswered."""
+    return bool(unanswered_messages(contact))
 
 
 def would_escalate(contact: Contact, ex: ExtractedEnquiry) -> bool:
@@ -199,23 +228,16 @@ def ingest(
 
 # ---- Rule 5: overdue (48h rule), driven by the demo clock ----
 def awaiting_reply(contact: Contact) -> bool:
-    if contact.last_inbound_at is None:
-        return False
-    return contact.last_outbound_at is None or contact.last_outbound_at < contact.last_inbound_at
+    """We owe this contact a reply: they have a message saved after our latest reply (event order)."""
+    return bool(unanswered_messages(contact))
 
 
 def waiting_since(contact: Contact) -> datetime | None:
     """When the contact started waiting for us: their first message after our last reply.
     A second message does not restart the clock (Rafi asked on Monday and again on Tuesday: he has
     been waiting since Monday)."""
-    if not awaiting_reply(contact):
-        return None
-    unanswered = [
-        e.received_at
-        for e in contact.enquiries
-        if contact.last_outbound_at is None or e.received_at > contact.last_outbound_at
-    ]
-    return min(unanswered) if unanswered else contact.last_inbound_at
+    unanswered = unanswered_messages(contact)
+    return min(a.at for a in unanswered) if unanswered else None
 
 
 def is_overdue(contact: Contact, now: datetime) -> bool:
