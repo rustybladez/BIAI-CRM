@@ -21,7 +21,6 @@ summary, with Gemini as fallback. I hand-labelled the 20 samples and improved pr
 20/20 within one level. All 55 pre-written replies pass the language, format and no-invented-facts checks.
 
 **What does not work yet.** No merging for contacts without a phone; placeholder FAQ; data resets on every deploy;
-no real WhatsApp / Facebook connection, sending or logins; the Gemini fallback often hits free-tier limits; 20
-samples that also guided the prompts overstate real accuracy.
+no real WhatsApp / Facebook connection, sending or logins; the Gemini fallback often hits free-tier limits; 20 samples that also guided the prompts overstate real accuracy.
 
 **Next.** WhatsApp and Messenger webhooks, Postgres with logins, name-based duplicate hints, BIAI's real FAQ.
