@@ -182,7 +182,7 @@ require('fs').mkdirSync(S, { recursive: true });
   await step('5 search Nowshin: certificate reply says not government approved', async () => {
     await search('Nowshin');
     const body = await replyText().inputValue();
-    if (!/not|\bna\b|নয়/i.test(body)) throw new Error(body);
+    if (!/\bnot\b|\bna\b|\bnoy\b|\bnoi\b|নয়/i.test(body)) throw new Error(body);
     await panel().getByText('certificate', { exact: true }).waitFor();
     await panel().getByText('Demo FAQ, placeholder values').waitFor();
   });
