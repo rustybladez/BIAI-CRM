@@ -42,6 +42,8 @@ def normalize_phone(raw: str | None) -> str | None:
     digits = re.sub(r"\D", "", raw.translate(_BANGLA_DIGITS))
     if digits.startswith("880"):
         digits = "0" + digits[3:]
+    elif len(digits) == 10 and digits.startswith("1"):
+        digits = "0" + digits  # a spreadsheet stored the number as a number and dropped the leading 0
     return digits if _BD_MOBILE.fullmatch(digits) else None
 
 

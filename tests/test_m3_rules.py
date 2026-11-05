@@ -30,13 +30,22 @@ def contact_for(session, seed_id: int) -> Contact:
 
 
 @pytest.mark.parametrize(
-    "raw", ["০১৭১১০০০০০১", "+8801711000001", "01711-000001", "8801711000001", "01711 000 001"]
+    "raw",
+    [
+        "০১৭১১০০০০০১",
+        "+8801711000001",
+        "01711-000001",
+        "8801711000001",
+        "01711 000 001",
+        "1711000001",  # CSV number column dropped the leading 0
+        "১৭১১০০০০০১",
+    ],
 )
 def test_phone_normalisation(raw):
     assert normalize_phone(raw) == "01711000001"
 
 
-@pytest.mark.parametrize("raw", [None, "", "12345", "01211000001", "017110000012"])
+@pytest.mark.parametrize("raw", [None, "", "12345", "01211000001", "017110000012", "1211000001", "171100000"])
 def test_invalid_phone(raw):
     assert normalize_phone(raw) is None
 
