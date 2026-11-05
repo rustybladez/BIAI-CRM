@@ -1,6 +1,7 @@
 import {
   Baby,
   Globe,
+  Layers,
   type LucideIcon,
   Megaphone,
   MessageCircle,
@@ -83,6 +84,12 @@ export const FLAG: Record<string, { icon: LucideIcon; label: string; explain: st
   minor: { icon: Baby, label: 'Under 18', explain: 'Looks like a school student: no hard selling, no personal details.', tone: 'amber' },
   callback_requested: { icon: PhoneCall, label: 'Wants a call', explain: 'Asked us to call, or said they will call again.', tone: 'slate' },
   group_or_bulk: { icon: Users, label: 'Group', explain: 'Enquiring for a team or several people.', tone: 'slate' },
+  multiple_enquiries: {
+    icon: Layers,
+    label: 'Several enquiries pasted',
+    explain: 'The paste held more than one enquiry. Only the first was read: paste the others separately.',
+    tone: 'amber',
+  },
   missing_phone: { icon: PhoneOff, label: 'No phone', explain: 'No phone number yet: the reply asks for one.', tone: 'amber' },
 }
 

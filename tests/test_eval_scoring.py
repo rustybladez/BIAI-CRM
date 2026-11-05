@@ -57,3 +57,9 @@ def test_system_checks_pass_on_saved_ai_results():
     rows = {r.id: r for r in read_enquiries()}
     results = {i["id"]: i for i in json.loads(Path("backend/seed/ai_results.json").read_text())["items"]}
     assert run_eval.system_checks(run_eval.load_gold(), rows, results) == []
+
+
+def test_empty_sender_and_channel_reach_the_prompt_as_blanks():
+    user = build_extraction_messages(None, "2026-10-28 12:00", None, None, "hi", received_at_given=False)[1]
+    assert user["content"].startswith("channel:  | received_at: 2026-10-28 12:00 (no time given;")
+    assert "sender_name:  | phone: \n" in user["content"]

@@ -23,6 +23,8 @@ People contact BIAI on WhatsApp, Facebook (Messenger and public comments), the w
 Phone call notes are written by staff in English, describing what the caller said.
 
 Read ONE enquiry and return a single JSON object that follows the JSON schema below. Output JSON only.
+Staff may paste a bare message, or a messy row copied from a sheet or chat export (timestamp, channel, name,
+phone and the message together). The channel and sender_name in the input line may be empty.
 
 ## How to decide
 1. message_type first:
@@ -50,6 +52,8 @@ Read ONE enquiry and return a single JSON object that follows the JSON schema be
 6. name: the person's name only. If the sender field has a role or company in brackets, move them to role / company.
    A job title stated in the message (e.g. "I am an HR executive") also goes to role.
    If the sender is clearly not a person (a page or brand name), name is null.
+   If sender_name is empty, take the name from the paste: a signature, "ami X" / "this is X", or a name column.
+   Never invent a name: no name in the paste means null.
 7. Numbers may be written in Bangla digits (০১২৩৪৫৬৭৮৯). Convert them for team_size. Copy phone numbers as-is.
 8. follow_up_by: ONLY for when WE should contact THEM. Set it only if the message:
    - asks for a call or reply by a time ("call me tomorrow", "this week e janaben"),
@@ -67,10 +71,17 @@ Read ONE enquiry and return a single JSON object that follows the JSON schema be
    - minor: the sender appears to be under 18 (e.g. a school student).
    - callback_requested: asks us to call them, OR says they will call us again (either way a call is expected).
    - group_or_bulk: enquiring for several people, a team or employees.
+   - multiple_enquiries: the paste holds more than one separate enquiry (see rule 14).
 10. missing_info: only what we need to actually help (e.g. "which program", "phone number" when none is given,
     "bKash transaction ID" for an unconfirmed payment).
 11. low_confidence_fields: list any field you guessed. Be honest; a human will check these.
 12. All reasons, details and the summary are in short English, whatever language the message was in.
+13. channel_in_message and received_at_in_message come from the paste itself, whatever the input line says.
+    channel_in_message only if the paste names the channel or it is obvious (e.g. "Call note:");
+    received_at_in_message only if the paste contains the date and time it was received.
+    Never invent either: null when the paste does not say.
+14. If the paste contains several separate enquiries (several rows, or several people), read ONLY the first
+    one and add the flag multiple_enquiries.
 
 ## JSON schema
 {schema}
@@ -83,7 +94,7 @@ script: Latin letters only
 message: Bhai fellowship er next batch kobe? Ami CSE 3rd year e pori, weekend e korte parbo?
 
 Output:
-{{"message_type":"lead","message_type_reason":"Student asking about the next fellowship batch.","name":"Nayeem","role":null,"company":null,"team_size":null,"phone_in_message":null,"interest":"fellowship","interest_detail":"Next batch date; weekend schedule; CSE student","language":"banglish","status":"New","priority":"medium","priority_reason":"Interested student asking schedule details.","follow_up_by":null,"flags":[],"summary":"CSE student asks when the next fellowship batch starts and if weekends work.","missing_info":[],"low_confidence_fields":[]}}
+{{"message_type":"lead","message_type_reason":"Student asking about the next fellowship batch.","name":"Nayeem","role":null,"company":null,"team_size":null,"phone_in_message":null,"channel_in_message":null,"received_at_in_message":null,"interest":"fellowship","interest_detail":"Next batch date; weekend schedule; CSE student","language":"banglish","status":"New","priority":"medium","priority_reason":"Interested student asking schedule details.","follow_up_by":null,"flags":[],"summary":"CSE student asks when the next fellowship batch starts and if weekends work.","missing_info":[],"low_confidence_fields":[]}}
 
 Input:
 channel: WhatsApp | received_at: 2026-03-05 18:30 | sender_name: Tahmid | phone: 01700000000
@@ -91,7 +102,7 @@ script: Latin letters only
 message: Ami next month e bootcamp korte chai, fee koto?
 
 Output:
-{{"message_type":"lead","message_type_reason":"Prospect asking the bootcamp fee before joining.","name":"Tahmid","role":null,"company":null,"team_size":null,"phone_in_message":null,"interest":"bootcamp","interest_detail":"Bootcamp fee; wants to start next month","language":"banglish","status":"New","priority":"medium","priority_reason":"Normal pre-purchase price question.","follow_up_by":null,"flags":[],"summary":"Wants to join the bootcamp next month and asks the fee. Next month is when they start, not when to contact them.","missing_info":[],"low_confidence_fields":[]}}
+{{"message_type":"lead","message_type_reason":"Prospect asking the bootcamp fee before joining.","name":"Tahmid","role":null,"company":null,"team_size":null,"phone_in_message":null,"channel_in_message":null,"received_at_in_message":null,"interest":"bootcamp","interest_detail":"Bootcamp fee; wants to start next month","language":"banglish","status":"New","priority":"medium","priority_reason":"Normal pre-purchase price question.","follow_up_by":null,"flags":[],"summary":"Wants to join the bootcamp next month and asks the fee. Next month is when they start, not when to contact them.","missing_info":[],"low_confidence_fields":[]}}
 
 Input:
 channel: Website form | received_at: 2026-03-03 15:00 | sender_name: Laila Noor (CEO, a fintech startup) | phone:
@@ -99,18 +110,37 @@ script: contains Bangla script
 message: আমাদের ২৫ জনের টিমের জন্য AI ট্রেনিং দরকার। আগামীকাল দুপুরে কল দিতে পারবেন? আমার নম্বর ০১৯০০০০০০০০
 
 Output:
-{{"message_type":"lead","message_type_reason":"Startup CEO wants AI training for her team.","name":"Laila Noor","role":"CEO","company":"a fintech startup","team_size":25,"phone_in_message":"০১৯০০০০০০০০","interest":"corporate","interest_detail":"AI training for 25-person team; call tomorrow noon","language":"bangla","status":"New","priority":"high","priority_reason":"Corporate deal with the decision-maker asking for a call.","follow_up_by":"2026-03-04T12:00","flags":["callback_requested","group_or_bulk"],"summary":"Fintech startup CEO wants AI training for 25 people and a call tomorrow at noon.","missing_info":[],"low_confidence_fields":[]}}
+{{"message_type":"lead","message_type_reason":"Startup CEO wants AI training for her team.","name":"Laila Noor","role":"CEO","company":"a fintech startup","team_size":25,"phone_in_message":"০১৯০০০০০০০০","channel_in_message":null,"received_at_in_message":null,"interest":"corporate","interest_detail":"AI training for 25-person team; call tomorrow noon","language":"bangla","status":"New","priority":"high","priority_reason":"Corporate deal with the decision-maker asking for a call.","follow_up_by":"2026-03-04T12:00","flags":["callback_requested","group_or_bulk"],"summary":"Fintech startup CEO wants AI training for 25 people and a call tomorrow at noon.","missing_info":[],"low_confidence_fields":[]}}
+
+Input:
+channel:  | received_at: 2026-03-06 12:00 (no time given; if the paste contains when it was received, resolve relative times against that) | sender_name:  | phone:
+script: Latin letters only
+message: 04/03/2026 21:15	Messenger	Farhana	+880 1600-000000	corporate training er brochure pathaben? amader office e 12 jon
+05/03/2026 08:02	WhatsApp	Kabir	01600000001	bootcamp kobe?
+
+Output:
+{{"message_type":"lead","message_type_reason":"Asks for a corporate training brochure for her office.","name":"Farhana","role":null,"company":null,"team_size":12,"phone_in_message":"+880 1600-000000","channel_in_message":"Facebook Messenger","received_at_in_message":"2026-03-04T21:15","interest":"corporate","interest_detail":"Corporate training brochure for 12 office staff","language":"banglish","status":"New","priority":"high","priority_reason":"Corporate enquiry for a 12-person office.","follow_up_by":null,"flags":["group_or_bulk","multiple_enquiries"],"summary":"Farhana asks for a corporate training brochure for 12 people in her office; a second enquiry in the paste was not read.","missing_info":["company name"],"low_confidence_fields":[]}}
 """
 
 
 def build_extraction_messages(
-    channel: str, received_at: str, sender_name: str, phone: str | None, message: str
+    channel: str | None,
+    received_at: str,
+    sender_name: str | None,
+    phone: str | None,
+    message: str,
+    received_at_given: bool = True,
 ) -> list[dict]:
     schema = json.dumps(ExtractedEnquiry.model_json_schema(), ensure_ascii=False)
     system = EXTRACTION_SYSTEM.format(schema=schema)
+    time_note = (
+        ""
+        if received_at_given
+        else " (no time given; if the paste contains when it was received, resolve relative times against that)"
+    )
     user = (
-        f"channel: {channel} | received_at: {received_at} | "
-        f"sender_name: {sender_name} | phone: {phone or ''}\n"
+        f"channel: {channel or ''} | received_at: {received_at}{time_note} | "
+        f"sender_name: {sender_name or ''} | phone: {phone or ''}\n"
         f"script: {script_hint(message)}\n"
         f"message: {message}"
     )

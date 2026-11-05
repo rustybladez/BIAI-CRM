@@ -87,6 +87,8 @@ export type Extraction = {
   company: string | null
   team_size: number | null
   phone_in_message: string | null
+  channel_in_message: string | null
+  received_at_in_message: string | null
   interest: string
   interest_detail: string | null
   language: string
@@ -101,7 +103,7 @@ export type Extraction = {
 }
 
 export type IntakeMessage = {
-  channel: string
+  channel: string | null // null = auto-detect from the paste
   sender_name: string
   phone: string | null
   received_at: string | null
@@ -115,6 +117,9 @@ export type AnalyseResult = {
   phone: string | null
   missing_phone: boolean
   status: string | null
+  channel: string | null // form value, else from the paste; null = staff must pick
+  received_at: string // form value, else from the paste, else the demo clock
+  received_at_source: 'form' | 'message' | 'demo_clock'
   duplicate: {
     contact_id: number
     name: string | null

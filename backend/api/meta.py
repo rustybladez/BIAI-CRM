@@ -1,17 +1,15 @@
 from enum import Enum
-from typing import Literal, get_args
 
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from backend.ai.schema import AIFlag, Interest, Language, MessageType, Priority, Status
+from backend.ai.schema import CHANNELS, AIFlag, Channel, Interest, Language, MessageType, Priority, Status
 from backend.config import demo_now
 from backend.normalize import SYSTEM_FLAGS
 
 router = APIRouter(prefix="/api", tags=["meta"])
 
-Channel = Literal["WhatsApp", "Facebook Messenger", "Facebook comment", "Website form", "Phone call note"]
-CHANNELS: list[str] = list(get_args(Channel))
+__all__ = ["CHANNELS", "Channel", "router"]  # Channel lives in ai/schema.py; re-exported here
 
 
 class Meta(BaseModel):

@@ -7,8 +7,12 @@ Rule of thumb for this file:
   48h overdue, phone normalisation) is done in plain code, not here.
 """
 from enum import Enum
+from typing import Literal, get_args
 
 from pydantic import BaseModel, Field
+
+Channel = Literal["WhatsApp", "Facebook Messenger", "Facebook comment", "Website form", "Phone call note"]
+CHANNELS: list[str] = list(get_args(Channel))
 
 
 class MessageType(str, Enum):
@@ -56,6 +60,7 @@ class AIFlag(str, Enum):
     minor = "minor"                                  # sender appears to be under 18
     callback_requested = "callback_requested"        # asked us to call, or said they will call
     group_or_bulk = "group_or_bulk"                  # several people / employees
+    multiple_enquiries = "multiple_enquiries"        # paste holds several enquiries; only the first was read
 
 
 class ExtractedEnquiry(BaseModel):
@@ -68,6 +73,16 @@ class ExtractedEnquiry(BaseModel):
     team_size: int | None = Field(None, description="Number of people to train, if stated.")
     phone_in_message: str | None = Field(
         None, description="Phone number written inside the message text, copied as-is. Null if none."
+    )
+    channel_in_message: Channel | None = Field(
+        None,
+        description="Channel ONLY if the paste states it (e.g. a 'WhatsApp' column) or it is obvious "
+        "(e.g. 'Call note:'). Null otherwise. Never guess.",
+    )
+    received_at_in_message: str | None = Field(
+        None,
+        description="When the enquiry was received, Dhaka time 'YYYY-MM-DDTHH:MM', ONLY if the paste "
+        "contains that date or time (e.g. a timestamp column). Null otherwise. Never guess.",
     )
 
     interest: Interest

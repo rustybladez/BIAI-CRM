@@ -1,4 +1,4 @@
-import { GitMerge, Sparkles, TriangleAlert, X } from 'lucide-react'
+import { GitMerge, Sparkles, TriangleAlert, Wand2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api, type AnalyseResult, type Extraction, type IntakeMessage, type Meta } from '../api'
 import { CHANNEL, FIELD_LABEL, FLAG, INTEREST_LABEL, LANGUAGE_NAME, TYPE_LABEL } from '../lib/labels'
@@ -38,9 +38,40 @@ const SAMPLES: { label: string; msg: IntakeMessage }[] = [
       message: "Hi! I'm a final-year CSE student. Is the bootcamp OK for beginners, and is there a student discount?",
     },
   },
+  {
+    // A row copied from a sheet: time, channel, name, phone and message all inside the paste.
+    label: 'Messy paste',
+    msg: {
+      channel: null,
+      sender_name: '',
+      phone: '',
+      received_at: null,
+      message:
+        '27/10/2026 21:40,WhatsApp,Sabbir Hossain,+880 1712-000042,"Salam vai. Bootcamp er next batch kobe? Weekend e class hoy? Kal shondhar por ekta call diyen plz"',
+    },
+  },
 ]
 
-const EMPTY: IntakeMessage = { channel: 'WhatsApp', sender_name: '', phone: '', received_at: null, message: '' }
+const EMPTY: IntakeMessage = { channel: null, sender_name: '', phone: '', received_at: null, message: '' }
+
+const TIME_SOURCE: Record<AnalyseResult['received_at_source'], string> = {
+  form: 'as entered',
+  message: 'from the paste',
+  demo_clock: 'not in the paste: demo clock',
+}
+
+// Empty name or channel after analysis: staff fill it in. Only the channel is required to save.
+function PleaseFill({ empty, label, children }: { empty: boolean; label: string; children: React.ReactNode }) {
+  return (
+    <label className={cx('block rounded-lg p-1.5', empty && 'bg-red-50 ring-1 ring-red-300')}>
+      <span className="flex items-center gap-1 text-xs font-medium text-slate-500">
+        {label}
+        {empty && <span className="text-red-700">Please fill</span>}
+      </span>
+      {children}
+    </label>
+  )
+}
 
 export function IntakeModal({
   meta,
@@ -51,9 +82,12 @@ export function IntakeModal({
   onClose: () => void
   onSaved: (contactId: number) => void
 }) {
-  const [msg, setMsg] = useState<IntakeMessage>({ ...EMPTY, received_at: meta.demo_now })
+  // received_at starts empty: a time in the paste wins, else the server uses the demo clock.
+  const [msg, setMsg] = useState<IntakeMessage>(EMPTY)
   const [result, setResult] = useState<AnalyseResult | null>(null)
   const [ex, setEx] = useState<Extraction | null>(null)
+  // Check step: form value first, then what the AI found in the paste. Staff can change both.
+  const [check, setCheck] = useState<{ channel: string | null; received_at: string }>({ channel: null, received_at: '' })
   const [busy, setBusy] = useState<'analyse' | 'save' | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -73,6 +107,7 @@ export function IntakeModal({
       const r = await api.analyse(payload())
       setResult(r)
       setEx(r.extraction)
+      setCheck({ channel: r.channel, received_at: r.received_at })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Analysis failed')
     } finally {
@@ -81,11 +116,11 @@ export function IntakeModal({
   }
 
   const save = async () => {
-    if (!result || !ex) return
+    if (!result || !ex || !check.channel) return
     setBusy('save')
     setError(null)
     try {
-      const r = await api.save(payload(), result, ex)
+      const r = await api.save({ ...payload(), channel: check.channel, received_at: check.received_at || null }, result, ex)
       onSaved(r.contact_id)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save')
@@ -103,6 +138,8 @@ export function IntakeModal({
       company: null,
       team_size: null,
       phone_in_message: null,
+      channel_in_message: null,
+      received_at_in_message: null,
       interest: 'unclear',
       interest_detail: null,
       language: /[\u0980-\u09FF]/.test(msg.message) ? 'bangla' : 'english',
@@ -115,12 +152,25 @@ export function IntakeModal({
       missing_info: [],
       low_confidence_fields: [],
     }
-    setResult({ extraction: manual, model_used: 'entered by hand', latency_ms: 0, phone: null, missing_phone: !msg.phone, status: 'New', duplicate: null })
+    const received_at = msg.received_at || meta.demo_now
+    setResult({
+      extraction: manual,
+      model_used: 'entered by hand',
+      latency_ms: 0,
+      phone: null,
+      missing_phone: !msg.phone,
+      status: 'New',
+      duplicate: null,
+      channel: msg.channel,
+      received_at,
+      received_at_source: msg.received_at ? 'form' : 'demo_clock',
+    })
     setEx(manual)
+    setCheck({ channel: msg.channel, received_at })
     setError(null)
   }
 
-  const canAnalyse = msg.sender_name.trim() && msg.message.trim()
+  const canAnalyse = msg.message.trim()
   const unsure = (k: string) => ex?.low_confidence_fields.includes(k)
   const exField = (k: keyof Extraction, input: React.ReactNode) => (
     <label className={cx('block rounded-lg p-1.5', unsure(k) && 'bg-amber-50 ring-1 ring-amber-300')}>
@@ -182,7 +232,7 @@ export function IntakeModal({
                 <button
                   key={s.label}
                   onClick={() => {
-                    setMsg({ ...s.msg, received_at: meta.demo_now })
+                    setMsg(s.msg)
                     setResult(null)
                     setError(null)
                   }}
@@ -195,6 +245,18 @@ export function IntakeModal({
             <fieldset>
               <legend className="mb-1 text-xs font-medium text-slate-500">Channel</legend>
               <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  aria-pressed={msg.channel === null}
+                  onClick={() => setMsg({ ...msg, channel: null })}
+                  className={cx(
+                    'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-medium ring-1 transition',
+                    msg.channel === null ? 'bg-indigo-600 text-white ring-indigo-600' : 'bg-white text-slate-700 ring-slate-200 hover:ring-indigo-300',
+                  )}
+                >
+                  <Wand2 className="size-3.5" aria-hidden />
+                  Auto-detect
+                </button>
                 {meta.channels.map((c) => (
                   <button
                     key={c}
@@ -214,7 +276,7 @@ export function IntakeModal({
             </fieldset>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
-                <span className="text-xs font-medium text-slate-500">Sender name (as shown in the app)</span>
+                <span className="text-xs font-medium text-slate-500">Sender name (optional, as shown in the app)</span>
                 <input value={msg.sender_name} onChange={(e) => setMsg({ ...msg, sender_name: e.target.value })} className={inputClass} />
               </label>
               <label className="block">
@@ -233,8 +295,8 @@ export function IntakeModal({
               />
             </label>
             <label className="block">
-              <span className="text-xs font-medium text-slate-500">Received</span>
-              <input type="datetime-local" value={msg.received_at ?? ''} onChange={(e) => setMsg({ ...msg, received_at: e.target.value })} className={inputClass} />
+              <span className="text-xs font-medium text-slate-500">Received (optional: else the time in the paste, else the demo clock)</span>
+              <input type="datetime-local" value={msg.received_at ?? ''} onChange={(e) => setMsg({ ...msg, received_at: e.target.value || null })} className={inputClass} />
             </label>
             <div className="flex items-center gap-3">
               <Button variant="primary" onClick={analyse} disabled={!canAnalyse} loading={busy === 'analyse'}>
@@ -302,7 +364,38 @@ export function IntakeModal({
                 )}
 
                 <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
-                  {exText('name')}
+                  <PleaseFill empty={!check.channel} label="Channel">
+                    <select
+                      value={check.channel ?? ''}
+                      onChange={(e) => setCheck({ ...check, channel: e.target.value || null })}
+                      className={inputClass}
+                    >
+                      <option value="">Choose…</option>
+                      {meta.channels.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </PleaseFill>
+                  <label className="block p-1.5">
+                    <span className="text-xs font-medium text-slate-500">
+                      Received <span className="font-normal text-slate-400">({TIME_SOURCE[result.received_at_source]})</span>
+                    </span>
+                    <input
+                      type="datetime-local"
+                      value={check.received_at}
+                      onChange={(e) => setCheck({ ...check, received_at: e.target.value })}
+                      className={inputClass}
+                    />
+                  </label>
+                  {ex.name?.trim() ? (
+                    exText('name')
+                  ) : (
+                    <PleaseFill empty label="Name">
+                      <input value={ex.name ?? ''} onChange={(e) => setEx({ ...ex, name: e.target.value || null })} className={inputClass} />
+                    </PleaseFill>
+                  )}
                   {exText('role')}
                   {exText('company')}
                   {exField(
@@ -345,9 +438,10 @@ export function IntakeModal({
                     ))}
                   </div>
                 )}
-                <div className="mt-auto flex justify-end gap-2 pt-2">
+                <div className="mt-auto flex items-center justify-end gap-2 pt-2">
+                  {!check.channel && <span className="mr-auto text-sm text-red-700">Choose the channel to save.</span>}
                   <Button onClick={onClose}>Cancel</Button>
-                  <Button variant="primary" onClick={save} loading={busy === 'save'}>
+                  <Button variant="primary" onClick={save} disabled={!check.channel} loading={busy === 'save'}>
                     {result.duplicate ? 'Save and merge' : 'Save contact'}
                   </Button>
                 </div>

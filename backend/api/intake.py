@@ -1,10 +1,11 @@
+from typing import Literal
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
 from backend.ai.client import AIUnavailable
 from backend.ai.extract import extract_enquiry
-from backend.ai.schema import ExtractedEnquiry
-from backend.api.meta import Channel
+from backend.ai.schema import Channel, ExtractedEnquiry
 from backend.config import demo_now, parse_local
 from backend.db import SessionDep
 from backend.normalize import find_duplicate, ingest, intake_status, resolve_phone, would_escalate
@@ -13,13 +14,21 @@ router = APIRouter(prefix="/api/intake", tags=["intake"])
 
 
 class IntakeMessage(BaseModel):
-    channel: Channel
-    sender_name: str = Field(min_length=1, max_length=200)
+    """Only the message is required. Empty fields are filled from the paste by the AI (form wins)."""
+
+    channel: Channel | None = None
+    sender_name: str | None = Field(default=None, max_length=200)
     phone: str | None = Field(default=None, max_length=40)
     received_at: str | None = Field(
-        default=None, description="Dhaka time 'YYYY-MM-DDTHH:MM'. Defaults to the demo clock."
+        default=None,
+        description="Dhaka time 'YYYY-MM-DDTHH:MM'. Else the time in the paste, else the demo clock.",
     )
     message: str = Field(min_length=1, max_length=5000)
+
+    @field_validator("sender_name", "phone", "received_at", mode="before")
+    @classmethod
+    def _blank_is_none(cls, v: str | None) -> str | None:
+        return v.strip() or None if isinstance(v, str) else v
 
     @field_validator("received_at")
     @classmethod
@@ -28,8 +37,31 @@ class IntakeMessage(BaseModel):
             parse_local(v)  # raises ValueError -> 422
         return v
 
-    def received(self) -> str:
-        return self.received_at or demo_now().strftime("%Y-%m-%dT%H:%M")
+
+TimeSource = Literal["form", "message", "demo_clock"]
+
+
+def _valid_local(value: str | None) -> str | None:
+    if not value:
+        return None
+    try:
+        return parse_local(value).strftime("%Y-%m-%dT%H:%M")
+    except ValueError:
+        return None  # the AI returned something that is not a time: ignore it
+
+
+def resolve_received(msg: IntakeMessage, ex: ExtractedEnquiry | None) -> tuple[str, TimeSource]:
+    """Form value first, then a time found in the paste, then the demo clock."""
+    if msg.received_at:
+        return parse_local(msg.received_at).strftime("%Y-%m-%dT%H:%M"), "form"
+    if ex and (found := _valid_local(ex.received_at_in_message)):
+        return found, "message"
+    return demo_now().strftime("%Y-%m-%dT%H:%M"), "demo_clock"
+
+
+def resolve_channel(msg: IntakeMessage, ex: ExtractedEnquiry | None) -> Channel | None:
+    """Form value first, then a channel the paste names. None = staff must pick one before saving."""
+    return msg.channel or (ex.channel_in_message if ex else None)
 
 
 class DuplicatePreview(BaseModel):
@@ -48,18 +80,30 @@ class AnalyseResult(BaseModel):
     missing_phone: bool
     status: str | None  # pipeline status on save; None = "Not a lead"
     duplicate: DuplicatePreview | None
+    channel: Channel | None  # form value, else from the paste; None = "Please fill"
+    received_at: str  # form value, else from the paste, else the demo clock
+    received_at_source: TimeSource
 
 
 @router.post("/analyse")
 def analyse(session: SessionDep, msg: IntakeMessage) -> AnalyseResult:
     """Run AI extraction on a pasted message and preview what saving would do. Nothing is saved."""
+    clock, _ = resolve_received(msg, None)
     try:
-        result = extract_enquiry(msg.channel, msg.received(), msg.sender_name, msg.phone, msg.message)
+        result = extract_enquiry(
+            msg.channel,
+            clock,
+            msg.sender_name,
+            msg.phone,
+            msg.message,
+            received_at_given=msg.received_at is not None,
+        )
     except AIUnavailable as e:
         raise HTTPException(status_code=503, detail=e.user_message()) from e
     ex = result.data
     phone = resolve_phone(msg.phone, ex.phone_in_message)
     dup = find_duplicate(session, phone)
+    received_at, source = resolve_received(msg, ex)
     return AnalyseResult(
         extraction=ex,
         model_used=result.model_used,
@@ -76,6 +120,9 @@ def analyse(session: SessionDep, msg: IntakeMessage) -> AnalyseResult:
         )
         if dup
         else None,
+        channel=resolve_channel(msg, ex),
+        received_at=received_at,
+        received_at_source=source,
     )
 
 
@@ -92,12 +139,17 @@ class SaveResult(BaseModel):
 
 @router.post("/save", status_code=201)
 def save(session: SessionDep, req: SaveRequest) -> SaveResult:
-    """Save an analysed message: creates a contact, or merges into the one with the same phone."""
+    """Save an analysed message: creates a contact, or merges into the one with the same phone.
+    A channel is required (form or paste); a name is not."""
+    channel = resolve_channel(req, req.extraction)
+    if channel is None:
+        raise HTTPException(status_code=422, detail="Please choose the channel this message came from.")
+    received_at, _ = resolve_received(req, req.extraction)
     contact, merged = ingest(
         session,
-        channel=req.channel,
-        received_at=parse_local(req.received()),
-        sender_name=req.sender_name,
+        channel=channel,
+        received_at=parse_local(received_at),
+        sender_name=req.sender_name or "",
         phone_raw=req.phone,
         message=req.message,
         extraction=req.extraction,

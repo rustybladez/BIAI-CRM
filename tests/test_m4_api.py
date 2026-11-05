@@ -232,7 +232,7 @@ def test_analyse_503_when_ai_down(seeded, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "bad", [{"channel": "Email"}, {"message": ""}, {"received_at": "yesterday"}, {"sender_name": ""}]
+    "bad", [{"channel": "Email"}, {"message": ""}, {"received_at": "yesterday"}, {"message": "x" * 5001}]
 )
 def test_intake_validation(seeded, bad):
     assert client.post("/api/intake/analyse", json=MSG | bad).status_code == 422
@@ -275,3 +275,59 @@ def test_same_minute_reply_and_new_message_via_api(seeded, monkeypatch):
     assert d["awaiting_reply"] is True
     assert d["waiting_since"] == "2026-10-28T12:00:00+06:00"
     assert not d["overdue"]
+
+
+# ---- intake from the paste alone (sender, channel, phone and time all inside the message) ----
+PASTE = {"message": "Invented: 03/11/2026 20:40 | WhatsApp | Mitu | 01633445566 | bootcamp fee koto?"}
+
+
+def test_message_only_paste_fills_name_phone_channel_time(seeded, monkeypatch):
+    ex = fake_ai(
+        monkeypatch,
+        name="Mitu",
+        phone_in_message="01633445566",
+        channel_in_message="WhatsApp",
+        received_at_in_message="2026-11-03T20:40",
+    )
+    r = client.post("/api/intake/analyse", json=PASTE).json()
+    assert r["extraction"]["name"] == "Mitu" and r["phone"] == "01633445566"
+    assert r["channel"] == "WhatsApp"
+    assert (r["received_at"], r["received_at_source"]) == ("2026-11-03T20:40", "message")
+    saved = client.post("/api/intake/save", json=PASTE | {"extraction": ex.model_dump(mode="json")})
+    assert saved.status_code == 201 and not saved.json()["merged"]
+    d = client.get(f"/api/contacts/{saved.json()['contact_id']}").json()
+    assert d["name"] == "Mitu" and d["phone"] == "01633445566"
+    assert d["enquiries"][0]["channel"] == "WhatsApp"
+    assert d["enquiries"][0]["received_at"] == "2026-11-03T20:40:00+06:00"
+
+
+def test_paste_with_rafis_phone_previews_merge(seeded, monkeypatch):
+    fake_ai(monkeypatch, name="Rafi", phone_in_message="+880 1711-000001")
+    r = client.post("/api/intake/analyse", json={"message": "Invented: Rafi, +880 1711-000001, price?"}).json()
+    assert r["phone"] == "01711000001"
+    assert r["duplicate"]["contact_id"] == cid(seeded, 1) and r["duplicate"]["would_escalate"]
+
+
+def test_form_values_win_over_the_paste(seeded, monkeypatch):
+    fake_ai(monkeypatch, channel_in_message="WhatsApp", received_at_in_message="2026-11-03T20:40")
+    form = PASTE | {"channel": "Website form", "received_at": "2026-10-28T09:00"}
+    r = client.post("/api/intake/analyse", json=form).json()
+    assert r["channel"] == "Website form"
+    assert (r["received_at"], r["received_at_source"]) == ("2026-10-28T09:00", "form")
+
+
+def test_no_time_anywhere_uses_demo_clock_and_bad_ai_time_is_ignored(seeded, monkeypatch):
+    fake_ai(monkeypatch, received_at_in_message="last Tuesday")
+    r = client.post("/api/intake/analyse", json=PASTE).json()
+    assert (r["received_at"], r["received_at_source"]) == ("2026-10-28T12:00", "demo_clock")
+    assert r["channel"] is None  # neither form nor paste: the UI asks "Please fill"
+
+
+def test_save_needs_a_channel_but_not_a_name(seeded, monkeypatch):
+    ex = fake_ai(monkeypatch).model_dump(mode="json")  # no name, no channel in the paste
+    r = client.post("/api/intake/save", json=PASTE | {"extraction": ex})
+    assert r.status_code == 422 and "channel" in r.json()["detail"]
+    r = client.post("/api/intake/save", json=PASTE | {"channel": "Website form", "extraction": ex})
+    assert r.status_code == 201
+    d = client.get(f"/api/contacts/{r.json()['contact_id']}").json()
+    assert d["name"] is None and d["enquiries"][0]["channel"] == "Website form"
