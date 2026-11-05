@@ -172,11 +172,18 @@ export function IntakeModal({
 
   const canAnalyse = msg.message.trim()
   const unsure = (k: string) => ex?.low_confidence_fields.includes(k)
-  const exField = (k: keyof Extraction, input: React.ReactNode) => (
-    <label className={cx('block rounded-lg p-1.5', unsure(k) && 'bg-amber-50 ring-1 ring-amber-300')}>
+  // `empty` only changes styling, never the element tree: swapping components while typing loses focus.
+  const exField = (k: keyof Extraction, input: React.ReactNode, empty = false) => (
+    <label
+      className={cx(
+        'block rounded-lg p-1.5',
+        empty ? 'bg-red-50 ring-1 ring-red-300' : unsure(k) && 'bg-amber-50 ring-1 ring-amber-300',
+      )}
+    >
       <span className="flex items-center gap-1 text-xs font-medium text-slate-500">
         {FIELD_LABEL[k] ?? k}
-        {unsure(k) && (
+        {empty && <span className="text-red-700">Please fill</span>}
+        {!empty && unsure(k) && (
           <span className="inline-flex items-center gap-0.5 text-amber-800">
             <TriangleAlert className="size-3" aria-hidden /> AI unsure, please check
           </span>
@@ -185,8 +192,13 @@ export function IntakeModal({
       {input}
     </label>
   )
-  const exText = (k: 'name' | 'role' | 'company' | 'summary') =>
-    ex && exField(k, <input value={ex[k] ?? ''} onChange={(e) => setEx({ ...ex, [k]: e.target.value || null })} className={inputClass} />)
+  const exText = (k: 'name' | 'role' | 'company' | 'summary', pleaseFill = false) =>
+    ex &&
+    exField(
+      k,
+      <input value={ex[k] ?? ''} onChange={(e) => setEx({ ...ex, [k]: e.target.value || null })} className={inputClass} />,
+      pleaseFill && !ex[k]?.trim(),
+    )
   const exSelect = (k: 'interest' | 'message_type' | 'language' | 'priority', options: { value: string; label: string }[]) =>
     ex &&
     exField(
@@ -389,13 +401,7 @@ export function IntakeModal({
                       className={inputClass}
                     />
                   </label>
-                  {ex.name?.trim() ? (
-                    exText('name')
-                  ) : (
-                    <PleaseFill empty label="Name">
-                      <input value={ex.name ?? ''} onChange={(e) => setEx({ ...ex, name: e.target.value || null })} className={inputClass} />
-                    </PleaseFill>
-                  )}
+                  {exText('name', true)}
                   {exText('role')}
                   {exText('company')}
                   {exField(
