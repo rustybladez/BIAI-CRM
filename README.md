@@ -21,10 +21,10 @@ only facts from BIAI's FAQ. A Today screen shows who to answer first.
 
 | | |
 |---|---|
-| **Reads a pasted message** | Name, role, company, team size (Bangla digits too), phone, what they want (bootcamp, fellowship, corporate), language, message type (lead, support, complaint, spam, not a customer), priority with a reason, deadlines such as "tomorrow after 5 PM". Fields the AI is unsure about are marked for a human to check. |
+| **Reads a pasted message** | Name, role, company, team size (Bangla digits too), phone, what they want (bootcamp, fellowship, corporate), language, message type (lead, support, complaint, spam, not a customer), priority with a reason, deadlines such as "tomorrow after 5 PM". Works from the message alone: channel, sender name and time are optional, and are taken from the paste when it has them (even a row copied from a spreadsheet); empty ones are marked "Please fill". Fields the AI is unsure about are marked for a human to check. |
 | **Suggests a reply** | In Bangla script, Banglish or English, matching the sender, with a one-click switch. Facebook comments get a short public reply, call notes get a call script, spam gets none. Facts come only from the FAQ; anything else becomes "the team will confirm". |
 | **Catches lost enquiries** | Messages from the same phone number merge into one contact. Someone who writes again before we replied becomes urgent. Overdue after 48 hours, or when their own deadline passes. |
-| **Pipeline** | New, Contacted, Interested, Paid, Lost as a board (drag to move) or a table, with filters, search and two sort orders. Spam and job seekers stay in a separate "Not a lead" tab. |
+| **Pipeline** | New, Contacted, Interested, Paid, Lost as a board (drag to move) or a table, with filters, search and two sort orders. Spam and job seekers stay in a separate "Not a lead" tab. When someone we are already talking to writes again, the AI may suggest the next stage ("AI suggests: Interested · Move"); only staff move a card. |
 | **Weekly summary** | Code computes every number; the AI writes the overview and a "chase first" list. Every number in the text is checked against the data. CSV export. |
 
 <table>
@@ -45,7 +45,9 @@ tested code.
 
 | AI (DeepSeek, Gemini as fallback) | Code |
 |---|---|
-| Message type, interest, language, priority and reason, deadlines, flags | Phone normalisation (Bangla digits, +880), duplicate merge |
+| Message type, interest, language, priority and reason, deadlines, flags | Phone normalisation (Bangla digits, +880, a leading 0 lost in a spreadsheet), duplicate merge |
+| Name, channel and time from a messy paste | Form values win over the AI's; a follow-up date more than 7 days out is dropped unless they asked for a call |
+| A suggested stage change (Interested, Lost, Paid) | Shown only for Contacted / Interested contacts, never applied without a click |
 | Reply wording in the target language | Reply format, language, what to ask for; the FAQ is the only source of facts |
 | Weekly overview and "chase first" picks | Every number in the summary; overdue and the 48 h rule; escalation to urgent |
 | | Checks on every AI output: JSON schema, invented numbers, wrong script, length |
@@ -59,7 +61,7 @@ and a pasted message can be filled in by hand.
 
 Hand-labelled expected output for all 20 samples is in [`eval/gold.json`](eval/gold.json). Latest run
 ([`eval/report.md`](eval/report.md)): 20/20 on message type, language, status, interest and name; follow-up dates
-3/3; flags 9/9; priority 20/20 within one level (19/20 exact). All 55 pre-written replies pass the reply checks
+3/3; flags 9/9; priority 20/20 within one level (18/20 exact). All 55 pre-written replies pass the reply checks
 ([`eval/replies.md`](eval/replies.md)). The prompts were improved from the eval's mismatches using general rules,
 never by putting the samples in a prompt (a test checks this). Twenty messages is a small set, so real-world
 accuracy will be lower.

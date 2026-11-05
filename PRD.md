@@ -167,6 +167,7 @@ Enums live in `backend/ai/schema.py` and are the single source of truth. The fro
 - `id`, `name`, `role`, `company`, `team_size`
 - `phone` (normalised, unique when not null), `missing_phone: bool`
 - `interest`, `language`, `status` (null for spam/irrelevant), `message_type`
+- `suggested_status` (AI-suggested next stage from the latest merged message; shown as a chip, never applied automatically)
 - `priority`, `priority_reason`, `flags: list[str]` (AI flags + system flags)
 - `follow_up_by: datetime | None`, `last_inbound_at`, `last_outbound_at`
 - `low_confidence_fields: list[str]`, `summary`, `missing_info: list[str]`
@@ -184,13 +185,14 @@ Enums live in `backend/ai/schema.py` and are the single source of truth. The fro
 
 ### System (code-side) rules, in `backend/normalize.py`
 
-1. **Phone normalisation:** Bangla digits `০-৯ → 0-9`; strip spaces/dashes; `+880` / `880` → `0`; valid BD mobile = `01[3-9]\d{8}`. Use `phone` from the CSV, else `phone_in_message` from the AI.
+1. **Phone normalisation:** Bangla digits `০-৯ → 0-9`; strip spaces/dashes; `+880` / `880` → `0`; a 10-digit number starting with `1` gets its leading `0` back (a spreadsheet stored it as a number); valid BD mobile = `01[3-9]\d{8}`. Use `phone` from the CSV, else `phone_in_message` from the AI.
 2. **Missing phone:** true if no valid phone from either source.
 3. **Duplicate merge:** same normalised phone → same Contact. Contacts without a phone are never auto-merged (documented limitation).
 4. **Priority escalation:** if a contact sends a new inbound message and `last_outbound_at` is null or earlier than the previous inbound, set priority to `urgent`, add system flag `repeat_no_reply`, reason "Asked again, no reply yet".
 5. **Overdue (48h rule):** a pipeline contact (any status except Lost) we owe a reply to is overdue if `follow_up_by` has passed, or if `now − waiting_since > 48h`, where `waiting_since` is their first message after our last reply (a second message does not restart the clock). "After our last reply" is decided by event order (Activity id), not timestamps, so a message saved in the same minute as a reply still counts as unanswered. `now` = demo clock.
 6. **Mark as sent:** logs `reply_sent`, sets `last_outbound_at`, and moves `New → Contacted`. Clears overdue. If rule 4 had escalated the contact, the escalation is dropped (no `repeat_no_reply` flag; priority and reason go back to the highest AI priority across their messages).
-7. **Status changes are staff actions.** The AI only sets `New` or `Paid` on intake.
+7. **Status changes are staff actions.** The AI only sets `New` or `Paid` on intake. It may also return `suggested_status` (Interested: clear intent to buy; Lost: declines or goes elsewhere; Paid: says they paid). Code offers it only when the message merges into a `Contacted` or `Interested` contact and it is a different stage; staff apply it with one click ("AI suggests: Interested · Move") or dismiss it. Any status change clears it; the next merged message replaces it.
+8. **Follow-up guard:** `follow_up_by` is only for when we should contact them (they asked for a call or reply by a time, said when they will call, or set a deadline). Code drops a `follow_up_by` more than 7 days after `received_at` unless `callback_requested` is set; the 48h rule covers those contacts.
 
 ### Demo clock
 
@@ -209,7 +211,7 @@ Enums live in `backend/ai/schema.py` and are the single source of truth. The fro
 
 ### 7.2 Extraction (done: `backend/ai/prompts.py`, `backend/ai/schema.py`)
 
-Input: channel, received_at, sender_name, phone, message, plus a code-side script hint. Output: `ExtractedEnquiry` JSON. The prompt uses invented examples only. **Never add sample enquiries to any prompt.** Improve the prompt from eval mismatches, not by changing `gold.json` (unless a label is genuinely wrong, and then say so in the commit).
+Input: channel, received_at, sender_name, phone, message, plus a code-side script hint. Channel and sender name may be empty: the AI then takes the name from the paste, and returns `channel_in_message` / `received_at_in_message` only if the paste states them (never invented). A paste with several enquiries: the first is read and the flag `multiple_enquiries` is set. Output: `ExtractedEnquiry` JSON. The prompt uses invented examples only. **Never add sample enquiries to any prompt.** Improve the prompt from eval mismatches, not by changing `gold.json` (unless a label is genuinely wrong, and then say so in the commit).
 
 ### 7.3 Reply suggestion (to build, M5)
 
@@ -265,9 +267,9 @@ Keys (all values fictional placeholders, labelled `placeholder: true`): bootcamp
 - Small meta line: model used, latency.
 
 **S3 Paste a message (intake)**
-- Inputs: channel (select), sender name, phone (optional), received time (default demo now), message.
-- "Analyse" → shows extracted fields for review (with low-confidence highlights) → "Save". If the phone matches an existing contact, show "Will merge with Rafi Ahmed" before saving.
-- 3 one-click sample buttons with **invented** messages (one Bangla, one Banglish, one English) for the live demo.
+- Inputs: message (required); channel (picker, default "Auto-detect"), sender name, phone and received time are optional.
+- "Analyse" → shows extracted fields for review (with low-confidence highlights) → "Save". Each field uses the form value first, then what the AI found in the paste; the time falls back to the demo clock. Empty name and channel are marked "Please fill"; saving needs a channel, not a name. If the phone matches an existing contact, show "Will merge with Rafi Ahmed" before saving, plus the AI's status suggestion as a chip when there is one.
+- 4 one-click sample buttons with **invented** messages (Bangla, Banglish, English, and a "Messy paste" spreadsheet row) for the live demo.
 
 **S4 Follow-ups + Weekly summary**
 - Overdue list (sorted urgent first), "due today" list, each with a one-click open.
@@ -285,9 +287,9 @@ Keys (all values fictional placeholders, labelled `placeholder: true`): bootcamp
 | GET | `/api/meta` | Enums (statuses, interests, languages, priorities, flags), demo clock |
 | GET | `/api/contacts` | List with filters (`status`, `interest`, `channel`, `priority`, `overdue`, `type`) |
 | GET | `/api/contacts/{id}` | Detail + enquiries + activities + latest reply draft |
-| PATCH | `/api/contacts/{id}` | Edit fields / status |
+| PATCH | `/api/contacts/{id}` | Edit fields / status; `dismiss_suggestion` hides the AI status suggestion |
 | POST | `/api/intake/analyse` | Run extraction on a pasted message (no save) |
-| POST | `/api/intake/save` | Save analysed message (merge if duplicate) |
+| POST | `/api/intake/save` | Save analysed message (merge if duplicate); needs a channel; `apply_suggested_status` applies the chip |
 | POST | `/api/contacts/{id}/reply` | Generate reply (`language` optional) |
 | POST | `/api/contacts/{id}/reply/sent` | Mark as sent |
 | GET | `/api/followups` | Overdue + due today |
@@ -337,7 +339,7 @@ Plus a manual review: print all 20 replies to `eval/replies.md`; the owner reads
 
 ### 10.3 Code tests (`pytest`, M3)
 
-- Phone normalisation: `০১৭১১০০০০০১`, `+8801711000001`, `01711-000001` → `01711000001`.
+- Phone normalisation: `০১৭১১০০০০০১`, `+8801711000001`, `01711-000001`, `1711000001` → `01711000001`.
 - Rafi merge: rows #1 + #12 → one contact, two enquiries, priority `urgent`, flag `repeat_no_reply`.
 - Missing phone count = 6.
 - Overdue with demo clock `2026-10-28T12:00`: #16 overdue (follow-up by 27 Oct 17:00); Rafi overdue (waiting since his first message, Mon 09:12); a contact marked "sent" is not overdue.

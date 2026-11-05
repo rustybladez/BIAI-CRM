@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import Depends
-from sqlalchemy import JSON
+from sqlalchemy import JSON, inspect, text
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Field, Relationship, Session, SQLModel, create_engine
 
@@ -37,6 +37,8 @@ class Contact(SQLModel, table=True):
     interest: str  # Interest
     language: str  # Language
     status: str | None = None  # Status; None = not a lead (spam / irrelevant)
+    # AI-suggested next stage from the latest merged message; shown as a chip, never applied automatically.
+    suggested_status: str | None = None
     priority: str  # Priority
     priority_reason: str = ""
     flags: list[str] = Field(default_factory=list, sa_type=JSON)  # AI flags + system flags
@@ -120,8 +122,19 @@ def default_url() -> str:
 engine = make_engine(default_url())
 
 
+# Columns added after the first release. create_all() does not add columns to an existing table.
+_ADDED_COLUMNS = {"contact": {"suggested_status": "VARCHAR"}}
+
+
 def create_tables(eng=None) -> None:
-    SQLModel.metadata.create_all(eng or engine)
+    eng = eng or engine
+    SQLModel.metadata.create_all(eng)
+    with eng.begin() as conn:
+        for table, columns in _ADDED_COLUMNS.items():
+            have = {c["name"] for c in inspect(conn).get_columns(table)}
+            for name, sql_type in columns.items():
+                if name not in have:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {sql_type}"))
 
 
 def get_session() -> Iterator[Session]:

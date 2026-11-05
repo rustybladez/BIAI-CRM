@@ -1,4 +1,4 @@
-import { LoaderCircle } from 'lucide-react'
+import { LoaderCircle, Sparkles, X } from 'lucide-react'
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { cx } from '../lib/ui'
 
@@ -71,3 +71,39 @@ export function ErrorNote({ message, onRetry }: { message: string; onRetry?: () 
   )
 }
 
+
+// "AI suggests: Interested · Move". Never applied without the click.
+export function StatusSuggestion({
+  status,
+  onMove,
+  onDismiss,
+  busy,
+}: {
+  status: string
+  onMove: () => void
+  onDismiss?: () => void
+  busy?: boolean
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 py-0.5 pl-2.5 pr-1 text-[13px] text-violet-900 ring-1 ring-violet-200">
+      <Sparkles className="size-3.5" aria-hidden />
+      <span>
+        AI suggests: <strong>{status}</strong>
+      </span>
+      <span aria-hidden>·</span>
+      <button
+        type="button"
+        onClick={onMove}
+        disabled={busy}
+        className="rounded-full bg-violet-600 px-2 py-0.5 text-xs font-semibold text-white hover:bg-violet-700 disabled:bg-violet-300"
+      >
+        Move
+      </button>
+      {onDismiss && (
+        <button type="button" onClick={onDismiss} disabled={busy} className="rounded-full p-0.5 text-violet-700 hover:bg-violet-100" aria-label="Dismiss suggestion" title="Dismiss">
+          <X className="size-3.5" />
+        </button>
+      )}
+    </span>
+  )
+}

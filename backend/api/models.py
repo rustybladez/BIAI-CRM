@@ -31,6 +31,7 @@ class ContactSummary(BaseModel):
     interest: str
     language: str
     status: str | None
+    suggested_status: str | None  # AI suggestion from the latest merged message; staff confirm with one click
     priority: str
     priority_reason: str
     flags: list[str]
@@ -119,6 +120,7 @@ def to_summary(c: Contact, now: datetime) -> ContactSummary:
                 "interest",
                 "language",
                 "status",
+                "suggested_status",
                 "priority",
                 "priority_reason",
                 "flags",

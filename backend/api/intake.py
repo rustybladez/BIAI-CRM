@@ -8,7 +8,15 @@ from backend.ai.extract import extract_enquiry
 from backend.ai.schema import Channel, ExtractedEnquiry
 from backend.config import demo_now, parse_local
 from backend.db import SessionDep
-from backend.normalize import find_duplicate, ingest, intake_status, resolve_phone, would_escalate
+from backend.normalize import (
+    change_status,
+    find_duplicate,
+    ingest,
+    intake_status,
+    resolve_phone,
+    status_suggestion,
+    would_escalate,
+)
 
 router = APIRouter(prefix="/api/intake", tags=["intake"])
 
@@ -70,6 +78,7 @@ class DuplicatePreview(BaseModel):
     status: str | None
     priority: str
     would_escalate: bool  # saving will raise this contact to urgent (asked again, no reply)
+    suggested_status: str | None  # AI-suggested stage for this contact; applied only if staff click it
 
 
 class AnalyseResult(BaseModel):
@@ -117,6 +126,7 @@ def analyse(session: SessionDep, msg: IntakeMessage) -> AnalyseResult:
             status=dup.status,
             priority=dup.priority,
             would_escalate=would_escalate(dup, ex),
+            suggested_status=status_suggestion(dup.status, ex),
         )
         if dup
         else None,
@@ -130,6 +140,7 @@ class SaveRequest(IntakeMessage):
     extraction: ExtractedEnquiry  # from /analyse, possibly corrected by staff
     model_used: str | None = None
     latency_ms: int | None = None
+    apply_suggested_status: bool = False  # staff clicked "Move" on the merge preview chip
 
 
 class SaveResult(BaseModel):
@@ -156,5 +167,7 @@ def save(session: SessionDep, req: SaveRequest) -> SaveResult:
         model_used=req.model_used,
         latency_ms=req.latency_ms,
     )
+    if req.apply_suggested_status and contact.suggested_status:
+        change_status(session, contact, contact.suggested_status, demo_now())
     session.commit()
     return SaveResult(contact_id=contact.id, merged=merged)

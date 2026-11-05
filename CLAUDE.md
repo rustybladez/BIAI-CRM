@@ -41,8 +41,13 @@ eval/run_eval.py     scores the AI against gold.json, prints a table
   Pydantic validation after one retry.
 - Always request JSON output and validate with the Pydantic model in `ai/schema.py`.
 - The AI only judges ONE message. Anything needing other records or arithmetic is plain code in `normalize.py`:
-  phone normalisation (Bangla digits ০-৯ → 0-9, +880/880 → 0), duplicate merge by phone, missing-phone flag,
-  48h overdue check, and raising a merged record to `urgent` when the same person writes again with no reply in between.
+  phone normalisation (Bangla digits ০-৯ → 0-9, +880/880 → 0, 10-digit `1…` → `01…`), duplicate merge by phone,
+  missing-phone flag, 48h overdue check, dropping a `follow_up_by` more than 7 days out without `callback_requested`,
+  and raising a merged record to `urgent` when the same person writes again with no reply in between.
+- Intake needs only the message. Channel, sender name and time come from the form first, then the paste
+  (`channel_in_message`, `received_at_in_message`), then (time only) the demo clock. Never invent them.
+- `suggested_status` is a suggestion only: shown when a message merges into a Contacted / Interested contact,
+  applied only by a staff click.
 - Replies may only state facts found in `seed/faq.yaml` (fictional placeholder values, labelled as such in the UI).
   If the answer is not there, the reply says the team will confirm. Never invent prices, dates, policies or approvals.
 - Reply language matches the sender: Bangla script → Bangla script, Banglish → Banglish, English → English.
@@ -64,6 +69,8 @@ eval/run_eval.py     scores the AI against gold.json, prints a table
 ## Commands
 - Backend: `uv run fastapi dev` (entrypoint `backend.main:app` is set in pyproject.toml)
 - Frontend: `cd frontend && npm run dev` (proxy `/api` to the backend); build with `npm run build` into `backend/static`
+- Keys: `.env` in the repo root or `backend/.env` (both are loaded). On Windows set `PYTHONIOENCODING=utf-8` for the
+  eval scripts, or printing the report fails.
 - Eval: `uv run python eval/run_eval.py` (rewrites seed AI results); `--report-only` writes `eval/report.md` and keeps
   `backend/seed/ai_results.json` (use this one: the seeded replies and weekly summary depend on those results)
 - Replies: `uv run python eval/run_reply_checks.py` (checks saved drafts); add `--generate` to rewrite

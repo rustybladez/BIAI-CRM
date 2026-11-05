@@ -94,6 +94,12 @@ class ExtractedEnquiry(BaseModel):
     status: Status | None = Field(
         None, description="Pipeline status. Null only for spam and irrelevant."
     )
+    suggested_status: Status | None = Field(
+        None,
+        description="Stage change THIS message signals, if any: Interested (clear intent to buy: asks payment "
+        "details, says they will join, wants the form or invoice, books a call), Lost (declines or goes "
+        "elsewhere), Paid (says they paid). Null otherwise. Staff decide; it is never applied automatically.",
+    )
     priority: Priority
     priority_reason: str = Field(description="One short English sentence.")
 

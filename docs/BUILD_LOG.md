@@ -125,3 +125,33 @@ per row (the fifth spans the row), smaller headline, queue rows with the priorit
 as one column on phones so the reply buttons are always reachable. Checked at 390 px: no screen is wider than the
 viewport. Found while testing: Reset dropped and recreated the tables, so a request arriving mid-reset failed with
 "no such table"; reset now empties and refills the tables in one transaction.
+
+**Follow-up dates only for contact times (2026-11-05):** "Ami ei mash ei join korte chai" became a 30 Nov
+follow-up. Prompt rule 8 and the schema now limit `follow_up_by` to when we should contact them (a call or reply by
+a time, "I'll call after 5", a deadline); join, start, payment, batch and exam dates stay null (new invented
+Banglish example). Code guard: `_follow_up` drops a date more than 7 days after `received_at` unless
+`callback_requested` is set. Eval unchanged (follow-ups 3/3, #7's payment date null); the three intake samples
+checked live (only the Bangla one, which asks for a call tomorrow, gets a date).
+
+**Intake from the paste alone (2026-11-05):** channel and sender name are optional; the channel picker defaults to
+Auto-detect and the received time starts empty. The AI returns `channel_in_message` and `received_at_in_message`
+only when the paste states them, takes the name from the paste when the sender field is empty, and flags
+`multiple_enquiries` when a paste holds several (it reads the first). The Check step uses form values first, then
+the AI's; empty name and channel are marked "Please fill"; saving needs a channel. New invented "Messy paste"
+sample (a spreadsheet row). Eval unchanged. Also: `backend/.env` is loaded, and `tzdata` is a dependency so
+Asia/Dhaka resolves on Windows.
+
+**Phone numbers from spreadsheets (2026-11-05):** a CSV phone column stored as a number drops the leading 0
+(`1721234569`). `normalize_phone` now adds it back for 10-digit numbers starting with 1; the `01[3-9]` check still
+applies.
+
+**Name field lost focus (2026-11-05, found in review):** the empty Name field in the Check step rendered a
+different component from the filled one, so the first keystroke remounted it. It now always renders the same
+input; "Please fill" is styling only. Checked in a browser by typing a full name.
+
+**AI status suggestion (2026-11-05):** `suggested_status` (Interested / Lost / Paid) from the message's own
+signal; the prompt now defines every stage. Code offers it only when a message merges into a Contacted or
+Interested contact, as "AI suggests: Interested · Move" in the merge preview and the contact panel; never applied
+without a click, cleared by any status change, dismissable. Eval unchanged (the 20 samples have no prior
+conversation); 14/14 invented messages classified correctly live; tests cover show, apply, dismiss, the cases where
+no chip appears, and the column being added to an existing DB.

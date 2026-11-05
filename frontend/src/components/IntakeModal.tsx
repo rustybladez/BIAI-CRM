@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { api, type AnalyseResult, type Extraction, type IntakeMessage, type Meta } from '../api'
 import { CHANNEL, FIELD_LABEL, FLAG, INTEREST_LABEL, LANGUAGE_NAME, TYPE_LABEL } from '../lib/labels'
 import { ChannelIcon } from './ContactCard'
-import { Button, Chip, ErrorNote, Spinner } from './ui'
+import { Button, Chip, ErrorNote, Spinner, StatusSuggestion } from './ui'
 import { cx, inputClass } from '../lib/ui'
 
 // INVENTED messages for the live demo. Never the 20 sample enquiries.
@@ -88,6 +88,8 @@ export function IntakeModal({
   const [ex, setEx] = useState<Extraction | null>(null)
   // Check step: form value first, then what the AI found in the paste. Staff can change both.
   const [check, setCheck] = useState<{ channel: string | null; received_at: string }>({ channel: null, received_at: '' })
+  // Staff clicked "Move" on the merge preview's AI status suggestion: applied when the merge is saved.
+  const [applySuggested, setApplySuggested] = useState(false)
   const [busy, setBusy] = useState<'analyse' | 'save' | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -108,6 +110,7 @@ export function IntakeModal({
       setResult(r)
       setEx(r.extraction)
       setCheck({ channel: r.channel, received_at: r.received_at })
+      setApplySuggested(false)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Analysis failed')
     } finally {
@@ -120,7 +123,7 @@ export function IntakeModal({
     setBusy('save')
     setError(null)
     try {
-      const r = await api.save({ ...payload(), channel: check.channel, received_at: check.received_at || null }, result, ex)
+      const r = await api.save({ ...payload(), channel: check.channel, received_at: check.received_at || null }, result, ex, applySuggested)
       onSaved(r.contact_id)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save')
@@ -144,6 +147,7 @@ export function IntakeModal({
       interest_detail: null,
       language: /[\u0980-\u09FF]/.test(msg.message) ? 'bangla' : 'english',
       status: 'New',
+      suggested_status: null,
       priority: 'medium',
       priority_reason: 'Entered by hand while the AI was unavailable.',
       follow_up_by: null,
@@ -364,6 +368,21 @@ export function IntakeModal({
                     <span>
                       Same phone as <strong>{result.duplicate.name ?? 'an existing contact'}</strong>: this message will be merged into their record.
                       {result.duplicate.would_escalate && <strong className="text-red-700"> They asked before and got no reply, so they will become urgent.</strong>}
+                      {result.duplicate.suggested_status && (
+                        <span className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className="text-indigo-800">Now {result.duplicate.status}.</span>
+                          {applySuggested ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-2.5 py-0.5 text-[13px] font-medium text-white">
+                              Will move to {result.duplicate.suggested_status} on save
+                              <button type="button" onClick={() => setApplySuggested(false)} className="underline">
+                                Undo
+                              </button>
+                            </span>
+                          ) : (
+                            <StatusSuggestion status={result.duplicate.suggested_status} onMove={() => setApplySuggested(true)} />
+                          )}
+                        </span>
+                      )}
                     </span>
                   </div>
                 ) : (

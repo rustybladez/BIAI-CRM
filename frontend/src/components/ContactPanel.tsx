@@ -17,7 +17,7 @@ import {
 import { cx, inputClass } from '../lib/ui'
 import { ChannelIcon, PriorityBadge, StatusPill, WaitTime } from './ContactCard'
 import { ReplyPanel } from './ReplyPanel'
-import { Button, ErrorNote, Spinner } from './ui'
+import { Button, ErrorNote, Spinner, StatusSuggestion } from './ui'
 
 const TZ = 'Asia/Dhaka'
 const dayKey = (iso: string) => new Intl.DateTimeFormat('en-GB', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso))
@@ -444,6 +444,13 @@ export function ContactPanel({
                 <h2 className="truncate text-xl font-bold tracking-tight text-slate-900">{displayName(contact)}</h2>
                 <PriorityBadge priority={contact.priority} />
                 <StatusPill status={contact.status} />
+                {contact.suggested_status && (
+                  <StatusSuggestion
+                    status={contact.suggested_status}
+                    onMove={() => void save({ status: contact.suggested_status })}
+                    onDismiss={() => void save({ dismiss_suggestion: true })}
+                  />
+                )}
                 {contact.overdue && <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700 ring-1 ring-red-200">Overdue</span>}
               </div>
               <p className="truncate text-[13px] text-slate-500">

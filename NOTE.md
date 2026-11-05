@@ -1,15 +1,16 @@
 # BIAI CRM: note
 
 **What I built.** A CRM where staff paste any enquiry (Bangla, Banglish or English; WhatsApp, Facebook, website
-or a call note) and the AI files it (who, what they want, priority with a reason) and drafts a reply from BIAI's
-FAQ. A Today screen shows who to answer first. Live: https://biai-crm.fastapicloud.dev
+or a call note; a bare message or a row copied from a sheet) and the AI files it (who, what they want, priority
+with a reason) and drafts a reply from BIAI's FAQ. A Today screen shows who to answer first. Live: https://biai-crm.fastapicloud.dev
 
 **Key choices.**
 - **Bangla script gets a Bangla script reply.** The brief says "English or Banglish, matching how the person
   wrote"; four samples are in Bangla script, and answering them in Banglish would not match how they wrote. Staff
   can switch any reply to Banglish or English in one click.
 - **AI for judgement, code for rules.** The AI reads one message at a time; duplicates, the 48-hour rule,
-  escalation and every number in the weekly summary are plain, tested code.
+  escalation and every number in the weekly summary are plain, tested code. The AI may suggest a stage change
+  (e.g. Interested); only staff move a card.
 - **The demo needs no live AI.** The 20 samples' AI results, replies and summary are pre-generated, so the demo
   works even if the AI is down; only new messages call it.
 

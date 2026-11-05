@@ -103,6 +103,7 @@ class ContactUpdate(BaseModel):
     )
     summary: str | None = None
     note: str | None = Field(default=None, description="Adds a note to the timeline")
+    dismiss_suggestion: bool = Field(default=False, description="Hide the AI status suggestion")
 
     @field_validator("follow_up_by")
     @classmethod
@@ -129,6 +130,8 @@ def update_contact(session: SessionDep, contact_id: ContactId, update: ContactUp
         contact.missing_phone = phone is None
 
     note = data.pop("note", None)
+    if data.pop("dismiss_suggestion", False):
+        contact.suggested_status = None
     if note:
         session.add(Activity(contact_id=contact.id, kind="note", body=note, at=now))
 

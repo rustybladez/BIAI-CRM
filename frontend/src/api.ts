@@ -40,6 +40,7 @@ export type ContactSummary = {
   interest: string
   language: string
   status: string | null
+  suggested_status: string | null // AI-suggested next stage from the latest merged message
   priority: string
   priority_reason: string
   flags: string[]
@@ -93,6 +94,7 @@ export type Extraction = {
   interest_detail: string | null
   language: string
   status: string | null
+  suggested_status: string | null // stage change this message signals; staff confirm
   priority: string
   priority_reason: string
   follow_up_by: string | null
@@ -126,6 +128,7 @@ export type AnalyseResult = {
     status: string | null
     priority: string
     would_escalate: boolean
+    suggested_status: string | null // offered as a chip; applied only if staff click Move
   } | null
 }
 
@@ -144,6 +147,7 @@ export type ContactUpdate = Partial<{
   follow_up_by: string | null
   summary: string
   note: string
+  dismiss_suggestion: boolean
 }>
 
 export class ApiError extends Error {
@@ -184,10 +188,11 @@ export const api = {
     request<ReplyDraft>('POST', `/contacts/${id}/reply`, { language, regenerate }),
   markSent: (id: number, body?: string) => request<ContactDetail>('POST', `/contacts/${id}/reply/sent`, { body }),
   analyse: (msg: IntakeMessage) => request<AnalyseResult>('POST', '/intake/analyse', msg),
-  save: (msg: IntakeMessage, analysed: AnalyseResult, extraction: Extraction) =>
+  save: (msg: IntakeMessage, analysed: AnalyseResult, extraction: Extraction, applySuggestedStatus = false) =>
     request<{ contact_id: number; merged: boolean }>('POST', '/intake/save', {
       ...msg,
       extraction,
+      apply_suggested_status: applySuggestedStatus,
       model_used: analysed.model_used,
       latency_ms: analysed.latency_ms,
     }),

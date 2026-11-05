@@ -29,6 +29,9 @@ TYPE_RANK = {
     MessageType.complaint: 4,
 }
 NOT_A_LEAD = {MessageType.spam.value, MessageType.irrelevant.value}
+# AI status suggestions are shown only for contacts we are already talking to, and only forward moves.
+SUGGEST_FOR = {Status.contacted.value, Status.interested.value}
+SUGGESTABLE = {Status.interested.value, Status.lost.value, Status.paid.value}
 
 # ---- Rule 1: phone normalisation ----
 _BANGLA_DIGITS = str.maketrans("০১২৩৪৫৬৭৮৯", "0123456789")
@@ -57,6 +60,14 @@ def intake_status(ex: ExtractedEnquiry) -> str | None:
     if ex.message_type.value in NOT_A_LEAD:
         return None
     return Status.paid.value if ex.status == Status.paid else Status.new.value
+
+
+def status_suggestion(current: str | None, ex: ExtractedEnquiry) -> str | None:
+    """The AI's suggested stage, if it should be offered for a contact at `current` status."""
+    s = ex.suggested_status.value if ex.suggested_status else None
+    if current in SUGGEST_FOR and s in SUGGESTABLE and s != current:
+        return s
+    return None
 
 
 def _max_priority(a: str, b: str) -> str:
@@ -174,6 +185,7 @@ def ingest(
         )
     else:
         escalate = would_escalate(contact, ex)
+        contact.suggested_status = status_suggestion(contact.status, ex)  # latest message decides
         for f in ("name", "role", "company", "team_size"):
             if getattr(contact, f) is None:
                 setattr(contact, f, getattr(ex, f))
@@ -273,6 +285,7 @@ def change_status(session: Session, contact: Contact, status: str, now: datetime
         Activity(contact_id=contact.id, kind="status_change", body=f"{contact.status} → {status}", at=now)
     )
     contact.status = status
+    contact.suggested_status = None  # staff decided
     contact.updated_at = utcnow()
     session.add(contact)
 

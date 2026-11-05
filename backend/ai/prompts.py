@@ -44,6 +44,19 @@ phone and the message together). The channel and sender_name in the input line m
 4. status: New for all leads, support and complaints, EXCEPT when they already paid -> Paid. Wanting to cancel
    an enrolment or get money back means they paid, so Paid.
    Never use Lost or Interested on intake; staff set those. Null for spam and irrelevant.
+   Pipeline stages, in order:
+   - New: has enquired; we have not answered yet.
+   - Contacted: we have replied or called; no decision from them yet.
+   - Interested: clear intent to buy (asks how to pay, says they will join, wants the form or invoice, books a call).
+   - Paid: has paid.
+   - Lost: declined, chose another provider, or stopped responding for good.
+4b. suggested_status: the stage change THIS message signals, for staff to confirm. Only these values:
+   - Interested: a clear intent to buy: asks for payment details (bKash number, bank account), says "I'll join" /
+     "ami join korbo", wants the admission form or an invoice, or books a call or meeting.
+   - Lost: declines ("not now", "budget nai"), or says they chose another institute or course.
+   - Paid: says they have paid.
+   Otherwise null. Questions about price, schedule or format alone are NOT a stage change: null.
+   Code decides whether to show it (only for contacts we are already talking to), so judge the message alone.
 5. priority:
    - urgent: angry customer, refund/cancel, threat to post publicly, or a same-day deadline.
    - high: corporate deal, money paid but unconfirmed, or a clear buying signal (how to pay, instalments, decision-maker).
@@ -94,7 +107,7 @@ script: Latin letters only
 message: Bhai fellowship er next batch kobe? Ami CSE 3rd year e pori, weekend e korte parbo?
 
 Output:
-{{"message_type":"lead","message_type_reason":"Student asking about the next fellowship batch.","name":"Nayeem","role":null,"company":null,"team_size":null,"phone_in_message":null,"channel_in_message":null,"received_at_in_message":null,"interest":"fellowship","interest_detail":"Next batch date; weekend schedule; CSE student","language":"banglish","status":"New","priority":"medium","priority_reason":"Interested student asking schedule details.","follow_up_by":null,"flags":[],"summary":"CSE student asks when the next fellowship batch starts and if weekends work.","missing_info":[],"low_confidence_fields":[]}}
+{{"message_type":"lead","message_type_reason":"Student asking about the next fellowship batch.","name":"Nayeem","role":null,"company":null,"team_size":null,"phone_in_message":null,"channel_in_message":null,"received_at_in_message":null,"interest":"fellowship","interest_detail":"Next batch date; weekend schedule; CSE student","language":"banglish","status":"New","suggested_status":null,"priority":"medium","priority_reason":"Interested student asking schedule details.","follow_up_by":null,"flags":[],"summary":"CSE student asks when the next fellowship batch starts and if weekends work.","missing_info":[],"low_confidence_fields":[]}}
 
 Input:
 channel: WhatsApp | received_at: 2026-03-05 18:30 | sender_name: Tahmid | phone: 01700000000
@@ -102,7 +115,7 @@ script: Latin letters only
 message: Ami next month e bootcamp korte chai, fee koto?
 
 Output:
-{{"message_type":"lead","message_type_reason":"Prospect asking the bootcamp fee before joining.","name":"Tahmid","role":null,"company":null,"team_size":null,"phone_in_message":null,"channel_in_message":null,"received_at_in_message":null,"interest":"bootcamp","interest_detail":"Bootcamp fee; wants to start next month","language":"banglish","status":"New","priority":"medium","priority_reason":"Normal pre-purchase price question.","follow_up_by":null,"flags":[],"summary":"Wants to join the bootcamp next month and asks the fee. Next month is when they start, not when to contact them.","missing_info":[],"low_confidence_fields":[]}}
+{{"message_type":"lead","message_type_reason":"Prospect asking the bootcamp fee before joining.","name":"Tahmid","role":null,"company":null,"team_size":null,"phone_in_message":null,"channel_in_message":null,"received_at_in_message":null,"interest":"bootcamp","interest_detail":"Bootcamp fee; wants to start next month","language":"banglish","status":"New","suggested_status":null,"priority":"medium","priority_reason":"Normal pre-purchase price question.","follow_up_by":null,"flags":[],"summary":"Wants to join the bootcamp next month and asks the fee. Next month is when they start, not when to contact them.","missing_info":[],"low_confidence_fields":[]}}
 
 Input:
 channel: Website form | received_at: 2026-03-03 15:00 | sender_name: Laila Noor (CEO, a fintech startup) | phone:
@@ -110,7 +123,7 @@ script: contains Bangla script
 message: আমাদের ২৫ জনের টিমের জন্য AI ট্রেনিং দরকার। আগামীকাল দুপুরে কল দিতে পারবেন? আমার নম্বর ০১৯০০০০০০০০
 
 Output:
-{{"message_type":"lead","message_type_reason":"Startup CEO wants AI training for her team.","name":"Laila Noor","role":"CEO","company":"a fintech startup","team_size":25,"phone_in_message":"০১৯০০০০০০০০","channel_in_message":null,"received_at_in_message":null,"interest":"corporate","interest_detail":"AI training for 25-person team; call tomorrow noon","language":"bangla","status":"New","priority":"high","priority_reason":"Corporate deal with the decision-maker asking for a call.","follow_up_by":"2026-03-04T12:00","flags":["callback_requested","group_or_bulk"],"summary":"Fintech startup CEO wants AI training for 25 people and a call tomorrow at noon.","missing_info":[],"low_confidence_fields":[]}}
+{{"message_type":"lead","message_type_reason":"Startup CEO wants AI training for her team.","name":"Laila Noor","role":"CEO","company":"a fintech startup","team_size":25,"phone_in_message":"০১৯০০০০০০০০","channel_in_message":null,"received_at_in_message":null,"interest":"corporate","interest_detail":"AI training for 25-person team; call tomorrow noon","language":"bangla","status":"New","suggested_status":"Interested","priority":"high","priority_reason":"Corporate deal with the decision-maker asking for a call.","follow_up_by":"2026-03-04T12:00","flags":["callback_requested","group_or_bulk"],"summary":"Fintech startup CEO wants AI training for 25 people and a call tomorrow at noon.","missing_info":[],"low_confidence_fields":[]}}
 
 Input:
 channel:  | received_at: 2026-03-06 12:00 (no time given; if the paste contains when it was received, resolve relative times against that) | sender_name:  | phone:
@@ -119,7 +132,7 @@ message: 04/03/2026 21:15	Messenger	Farhana	+880 1600-000000	corporate training 
 05/03/2026 08:02	WhatsApp	Kabir	01600000001	bootcamp kobe?
 
 Output:
-{{"message_type":"lead","message_type_reason":"Asks for a corporate training brochure for her office.","name":"Farhana","role":null,"company":null,"team_size":12,"phone_in_message":"+880 1600-000000","channel_in_message":"Facebook Messenger","received_at_in_message":"2026-03-04T21:15","interest":"corporate","interest_detail":"Corporate training brochure for 12 office staff","language":"banglish","status":"New","priority":"high","priority_reason":"Corporate enquiry for a 12-person office.","follow_up_by":null,"flags":["group_or_bulk","multiple_enquiries"],"summary":"Farhana asks for a corporate training brochure for 12 people in her office; a second enquiry in the paste was not read.","missing_info":["company name"],"low_confidence_fields":[]}}
+{{"message_type":"lead","message_type_reason":"Asks for a corporate training brochure for her office.","name":"Farhana","role":null,"company":null,"team_size":12,"phone_in_message":"+880 1600-000000","channel_in_message":"Facebook Messenger","received_at_in_message":"2026-03-04T21:15","interest":"corporate","interest_detail":"Corporate training brochure for 12 office staff","language":"banglish","status":"New","suggested_status":null,"priority":"high","priority_reason":"Corporate enquiry for a 12-person office.","follow_up_by":null,"flags":["group_or_bulk","multiple_enquiries"],"summary":"Farhana asks for a corporate training brochure for 12 people in her office; a second enquiry in the paste was not read.","missing_info":["company name"],"low_confidence_fields":[]}}
 """
 
 
